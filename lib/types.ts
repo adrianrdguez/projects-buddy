@@ -11,6 +11,7 @@ export interface Task {
   title: string;
   description: string;
   status: 'pending' | 'in_progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
   projectId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -31,4 +32,44 @@ export interface SidebarProps {
 export interface InputBarProps {
   onSubmit: (message: string) => void;
   placeholder?: string;
+}
+
+// API Request/Response Interfaces
+export interface GenerateTasksRequest {
+  input: string;
+  projectId: string;
+}
+
+export interface GenerateTasksResponse {
+  success: boolean;
+  tasks: Task[];
+  error?: string;
+}
+
+export interface ExecuteTaskRequest {
+  taskId: string;
+}
+
+export interface ExecuteTaskResponse {
+  success: boolean;
+  status: string;
+  filePath?: string;
+  error?: string;
+}
+
+export interface CreateProjectRequest {
+  name: string;
+  description?: string;
+}
+
+export interface ProjectsResponse {
+  success: boolean;
+  projects: Project[];
+  error?: string;
+}
+
+export interface ApiError {
+  success: false;
+  error: string;
+  code?: string;
 }
