@@ -81,7 +81,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
+    <div className="flex h-screen bg-[#343541]">
       <Sidebar
         projects={projects}
         activeProjectId={activeProjectId}
@@ -96,7 +96,7 @@ export default function Dashboard() {
           onTaskClick={handleTaskClick}
         />
         
-        <div className="pb-20">
+        <div className="pb-32">
           {/* Spacer for fixed input bar */}
         </div>
       </div>

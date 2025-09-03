@@ -1,53 +1,44 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Circle } from "lucide-react";
+import { Plus, Settings, MessageSquare } from "lucide-react";
 import { SidebarProps } from "@/lib/types";
 
 export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProject }: SidebarProps) {
   return (
-    <div className="w-80 h-screen bg-gray-900 border-r border-gray-800 flex flex-col">
-      <div className="p-6 border-b border-gray-800">
-        <h1 className="text-xl font-semibold text-white">AI Planner</h1>
+    <div className="w-64 h-screen bg-[#202123] flex flex-col">
+      <div className="p-4">
+        <Button
+          onClick={onNewProject}
+          className="w-full justify-start gap-2 bg-transparent border border-gray-600 hover:bg-gray-700 text-white text-sm py-2.5"
+        >
+          <Plus className="w-4 h-4" />
+          Nuevo proyecto
+        </Button>
       </div>
       
-      <div className="flex-1 p-4">
-        <div className="mb-4">
-          <Button
-            onClick={onNewProject}
-            variant="outline"
-            className="w-full justify-start gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 text-white"
-          >
-            <Plus className="w-4 h-4" />
-            + Nuevo proyecto
-          </Button>
-        </div>
-        
-        <div className="space-y-2">
+      <div className="flex-1 px-3 pb-3 overflow-y-auto">
+        <div className="space-y-1">
           {projects.map((project) => (
             <button
               key={project.id}
               onClick={() => onProjectSelect(project.id)}
-              className={`w-full text-left p-3 rounded-md transition-colors flex items-center gap-3 ${
+              className={`w-full text-left p-3 rounded-lg transition-colors flex items-center gap-3 text-sm ${
                 activeProjectId === project.id
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
               }`}
             >
-              <Circle className="w-2 h-2 fill-current" />
+              <MessageSquare className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">{project.name}</span>
             </button>
           ))}
         </div>
       </div>
       
-      <div className="p-4 border-t border-gray-800">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start gap-2 text-gray-400 hover:text-white hover:bg-gray-800"
-        >
+      <div className="border-t border-gray-700 p-3">
+        <div className="flex items-center gap-3 px-3 py-2 text-gray-300 hover:bg-gray-700 rounded-lg cursor-pointer transition-colors">
           <Settings className="w-4 h-4" />
-          Settings
-        </Button>
+          <span className="text-sm">Configuración</span>
+        </div>
       </div>
     </div>
   );

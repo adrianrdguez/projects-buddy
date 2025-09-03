@@ -8,27 +8,30 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'border-green-500';
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Completado</div>;
       case 'in_progress':
-        return 'border-blue-500';
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">En progreso</div>;
       default:
-        return 'border-gray-600';
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Pendiente</div>;
     }
   };
 
   return (
     <Card
-      className={`bg-gray-800 border-2 border-dashed cursor-pointer hover:bg-gray-700 transition-colors ${getStatusColor(task.status)}`}
+      className="bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 hover:border-gray-300"
       onClick={handleClick}
     >
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium text-white">{task.title}</CardTitle>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-gray-900">{task.title}</CardTitle>
+          {getStatusBadge(task.status)}
+        </div>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-300 text-sm">{task.description}</p>
+        <p className="text-gray-600 text-sm leading-relaxed">{task.description}</p>
       </CardContent>
     </Card>
   );
