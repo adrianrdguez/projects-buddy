@@ -6,33 +6,33 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
     switch (theme) {
       case 'green':
         return {
-          header: 'text-[#E4E4E7]',
-          badge: 'bg-green-500/20 text-green-300',
-          border: 'border-[#3A3B4C]'
+          header: 'text-foreground',
+          badge: 'bg-success/10 text-success-foreground',
+          border: 'border-border'
         };
       case 'yellow':
         return {
-          header: 'text-[#E4E4E7]',
-          badge: 'bg-yellow-500/20 text-yellow-300',
-          border: 'border-[#3A3B4C]'
+          header: 'text-foreground',
+          badge: 'bg-secondary/20 text-secondary-foreground',
+          border: 'border-border'
         };
       case 'blue':
         return {
-          header: 'text-[#E4E4E7]',
-          badge: 'bg-blue-500/20 text-blue-300',
-          border: 'border-[#3A3B4C]'
+          header: 'text-foreground',
+          badge: 'bg-primary/10 text-primary',
+          border: 'border-border'
         };
       case 'gray':
         return {
-          header: 'text-[#E4E4E7]',
-          badge: 'bg-gray-500/20 text-gray-300',
-          border: 'border-[#3A3B4C]'
+          header: 'text-foreground',
+          badge: 'bg-muted text-muted-foreground',
+          border: 'border-border'
         };
       default:
         return {
-          header: 'text-[#E4E4E7]',
-          badge: 'bg-gray-500/20 text-gray-300',
-          border: 'border-[#3A3B4C]'
+          header: 'text-foreground',
+          badge: 'bg-muted text-muted-foreground',
+          border: 'border-border'
         };
     }
   };
@@ -41,10 +41,10 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
   const taskCount = column.tasks.length;
 
   return (
-    <div className={`flex flex-col h-full border rounded-xl ${theme.border} bg-[#2A2B3A]/80 backdrop-blur-sm shadow-lg`}>
+    <div className={`flex flex-col h-full border rounded-xl ${theme.border} bg-card backdrop-blur-sm shadow-sm`}>
       {/* Column Header */}
       <div className={`flex items-center justify-between p-4 border-b ${theme.border}`}>
-        <h3 className="font-semibold text-sm tracking-tight text-[#E4E4E7]">{column.title}</h3>
+        <h3 className="font-semibold text-sm tracking-tight ${theme.header}">{column.title}</h3>
         <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${theme.badge}`}>
           {taskCount}
         </div>
@@ -63,7 +63,7 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
             />
           ))
         ) : (
-          <div className="flex items-center justify-center h-32 text-[#A1A1AA] text-sm">
+          <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
             <div className="text-center">
               <div className="mb-2 opacity-50">
                 <svg

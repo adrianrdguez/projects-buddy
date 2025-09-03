@@ -207,8 +207,8 @@ export default function Dashboard() {
 
   if (isLoadingProjects) {
     return (
-      <div className="flex h-screen bg-[#343541] items-center justify-center">
-        <div className="text-white text-center">
+      <div className="flex h-screen bg-background items-center justify-center">
+        <div className="text-foreground text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-4 mx-auto"></div>
           <p>Cargando proyectos...</p>
         </div>
@@ -217,7 +217,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-[#343541]">
+    <div className="flex h-screen bg-background">
       <Sidebar
         projects={projects}
         activeProjectId={activeProjectId || undefined}

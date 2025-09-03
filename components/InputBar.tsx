@@ -34,7 +34,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
     <div className="fixed bottom-6 left-64 right-6">
       <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="relative">
-          <div className={`flex items-center bg-[#2A2B3A] border border-[#3A3B4C] rounded-full shadow-xl hover:shadow-2xl transition-all duration-200 px-4 py-3 ${
+          <div className={`flex items-center bg-card border border-border rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3 ${
             isLoading ? 'opacity-75' : ''
           }`}>
             <input
@@ -43,7 +43,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
               onKeyDown={handleKeyPress}
               placeholder={isLoading ? "Generando tareas..." : placeholder}
               disabled={isLoading}
-              className="flex-1 bg-transparent border-none outline-none text-[#E4E4E7] placeholder:text-[#A1A1AA] text-base disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base disabled:cursor-not-allowed"
             />
             
             <div className="flex items-center ml-2 relative">
@@ -52,7 +52,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
                   type="button"
                   size="icon"
                   disabled={isLoading}
-                  className={`bg-transparent hover:bg-[#2F303E] text-[#A1A1AA] rounded-full w-8 h-8 transition-all duration-300 ease-out disabled:opacity-50 ${
+                  className={`bg-transparent hover:bg-accent text-muted-foreground rounded-full w-8 h-8 transition-all duration-300 ease-out disabled:opacity-50 ${
                     hasText 
                       ? 'transform -translate-x-10' 
                       : 'transform translate-x-10'
@@ -65,7 +65,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
                   type="submit"
                   size="icon"
                   disabled={isDisabled}
-                  className={`bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-full w-8 h-8 ml-2 transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-8 h-8 ml-2 transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed ${
                     hasText 
                       ? 'transform translate-x-0 opacity-100 scale-100' 
                       : 'transform translate-x-0 opacity-0 scale-75 pointer-events-none'
@@ -82,7 +82,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
           </div>
         </form>
         
-        <p className="text-xs text-[#A1A1AA] text-center mt-2">
+        <p className="text-xs text-muted-foreground text-center mt-2">
           {isLoading 
             ? "Procesando con IA..." 
             : "Presiona Enter para enviar, Shift + Enter para nueva línea"
