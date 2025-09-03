@@ -2,9 +2,14 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TaskCardProps, ExecuteTaskResponse } from "@/lib/types";
-import { Code, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Code, Loader2, CheckCircle, AlertCircle, Clock, Link } from "lucide-react";
 
-export function TaskCard({ task, onClick }: TaskCardProps) {
+interface ExtendedTaskCardProps extends TaskCardProps {
+  onExecute?: (task: any) => void;
+  variant?: 'default' | 'kanban';
+}
+
+export function TaskCard({ task, onClick, onExecute, variant = 'default' }: ExtendedTaskCardProps) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<string | null>(null);
   const [executionError, setExecutionError] = useState<string | null>(null);
@@ -18,6 +23,11 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
   const handleExecuteTask = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     
+    if (onExecute) {
+      onExecute(task);
+      return;
+    }
+
     setIsExecuting(true);
     setExecutionResult(null);
     setExecutionError(null);
@@ -53,12 +63,26 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Completado</div>;
       case 'in_progress':
         return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">En progreso</div>;
+      case 'blocked':
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Bloqueado</div>;
       default:
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Pendiente</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Listo</div>;
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Alta</div>;
+      case 'medium':
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Media</div>;
+      default:
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Baja</div>;
     }
   };
 
   const getPriorityColor = (priority: string) => {
+    if (variant === 'kanban') return '';
     switch (priority) {
       case 'high':
         return 'border-l-red-500';
@@ -69,6 +93,168 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
     }
   };
 
+  const getActionButton = () => {
+    switch (task.status) {
+      case 'ready':
+        return (
+          <Button
+            onClick={handleExecuteTask}
+            disabled={isExecuting}
+            size="sm"
+            className="w-full bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+          >
+            {isExecuting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Iniciando...
+              </>
+            ) : (
+              <>
+                <Code className="w-4 h-4 mr-2" />
+                Enviar a Editor
+              </>
+            )}
+          </Button>
+        );
+      case 'blocked':
+        return (
+          <Button
+            disabled
+            size="sm"
+            variant="outline"
+            className="w-full text-yellow-600 border-yellow-300 cursor-not-allowed"
+          >
+            <Link className="w-4 h-4 mr-2" />
+            Esperando dependencias
+          </Button>
+        );
+      case 'in_progress':
+        return (
+          <Button
+            onClick={handleExecuteTask}
+            disabled={isExecuting}
+            size="sm"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {isExecuting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Continuando...
+              </>
+            ) : (
+              <>
+                <Code className="w-4 h-4 mr-2" />
+                Continuar
+              </>
+            )}
+          </Button>
+        );
+      case 'completed':
+        return (
+          <Button
+            disabled
+            size="sm"
+            variant="outline"
+            className="w-full text-gray-600 border-gray-300 cursor-not-allowed"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Completado
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
+
+  if (variant === 'kanban') {
+    return (
+      <Card className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300">
+        <CardHeader className="pb-3" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
+          <div className="flex items-center justify-between mb-2">
+            <CardTitle className="text-sm font-semibold text-gray-900 leading-tight">
+              {task.title}
+            </CardTitle>
+            {getPriorityBadge(task.priority)}
+          </div>
+          
+          {/* Time estimate and dependencies */}
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>{task.estimatedTime || '1 hora'}</span>
+            </div>
+            {task.dependencies && task.dependencies.length > 0 && (
+              <div className="flex items-center gap-1">
+                <Link className="w-3 h-3" />
+                <span>{task.dependencies.length} dep.</span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
+            {task.description}
+          </p>
+          
+          {/* Progress bar for in-progress tasks */}
+          {task.status === 'in_progress' && task.progress !== undefined && (
+            <div className="mb-3">
+              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <span>Progreso</span>
+                <span>{task.progress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${task.progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Dependencies list */}
+          {task.dependencies && task.dependencies.length > 0 && (
+            <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+              <div className="text-xs text-gray-600 font-medium mb-1">Dependencias:</div>
+              <div className="space-y-1">
+                {task.dependencies.slice(0, 2).map((depId) => (
+                  <div key={depId} className="text-xs text-gray-500 flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-gray-400" />
+                    Task {depId.slice(-4)}
+                  </div>
+                ))}
+                {task.dependencies.length > 2 && (
+                  <div className="text-xs text-gray-400">
+                    +{task.dependencies.length - 2} más...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Execution feedback */}
+          {executionResult && (
+            <div className="flex items-center gap-2 mb-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+              <p className="text-green-700 text-xs">{executionResult}</p>
+            </div>
+          )}
+          
+          {executionError && (
+            <div className="flex items-center gap-2 mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+              <p className="text-red-700 text-xs">{executionError}</p>
+            </div>
+          )}
+          
+          {getActionButton()}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Default card layout (for backward compatibility)
   return (
     <Card
       className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300 border-l-4 ${getPriorityColor(task.priority)}`}

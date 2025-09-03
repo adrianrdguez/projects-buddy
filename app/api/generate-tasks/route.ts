@@ -57,118 +57,172 @@ async function generateTasksFromInput(input: string, projectId: string): Promise
     id: `task-${Date.now()}-${index}`,
     title: template.title,
     description: template.description,
-    status: 'pending' as const,
+    status: 'ready' as const,
     priority: template.priority,
+    dependencies: template.dependencies || [],
+    estimatedTime: template.estimatedTime,
     projectId,
     createdAt: currentTime,
     updatedAt: currentTime
   }));
 }
 
-function getTaskTemplatesForInput(input: string): Array<{title: string, description: string, priority: 'low' | 'medium' | 'high'}> {
+function getTaskTemplatesForInput(input: string): Array<{
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  dependencies?: string[];
+  estimatedTime: string;
+}> {
   const lowerInput = input.toLowerCase();
   
   if (lowerInput.includes('auth') || lowerInput.includes('login') || lowerInput.includes('signup')) {
-    return [
+    const authTasks = [
       {
         title: 'Setup Authentication Provider',
         description: 'Configure authentication service (Supabase, Auth0, or Firebase)',
-        priority: 'high'
+        priority: 'high' as const,
+        dependencies: [],
+        estimatedTime: '2 horas'
       },
       {
         title: 'Create Login Component',
         description: 'Build login form with email/password and social auth options',
-        priority: 'high'
+        priority: 'high' as const,
+        dependencies: ['task-${Date.now()}-0'], // Depends on auth provider setup
+        estimatedTime: '3 horas'
       },
       {
         title: 'Create Signup Component',
         description: 'Build registration form with validation and email confirmation',
-        priority: 'high'
+        priority: 'high' as const,
+        dependencies: ['task-${Date.now()}-0'], // Depends on auth provider setup
+        estimatedTime: '4 horas'
       },
       {
         title: 'Implement Protected Routes',
         description: 'Add middleware to protect authenticated pages and API routes',
-        priority: 'medium'
+        priority: 'medium' as const,
+        dependencies: ['task-${Date.now()}-1', 'task-${Date.now()}-2'], // Depends on login/signup
+        estimatedTime: '2 horas'
       },
       {
         title: 'Setup User Profile Management',
         description: 'Create user profile page with update functionality',
-        priority: 'low'
+        priority: 'low' as const,
+        dependencies: ['task-${Date.now()}-3'], // Depends on protected routes
+        estimatedTime: '3 horas'
       }
     ];
+
+    // Fix dependencies with actual task IDs
+    const baseId = Date.now();
+    return authTasks.map((task, index) => ({
+      ...task,
+      dependencies: task.dependencies?.map(dep => 
+        dep.replace('task-${Date.now()}', `task-${baseId}`)
+      ) || []
+    }));
   }
   
   if (lowerInput.includes('api') || lowerInput.includes('backend')) {
+    const baseId = Date.now();
     return [
       {
         title: 'Design API Architecture',
         description: 'Plan REST API endpoints and data models',
-        priority: 'high'
+        priority: 'high' as const,
+        dependencies: [],
+        estimatedTime: '3 horas'
       },
       {
         title: 'Setup Database Schema',
         description: 'Create database tables and relationships',
-        priority: 'high'
+        priority: 'high' as const,
+        dependencies: [`task-${baseId}-0`],
+        estimatedTime: '4 horas'
       },
       {
         title: 'Implement CRUD Operations',
         description: 'Build Create, Read, Update, Delete operations for main entities',
-        priority: 'medium'
+        priority: 'medium' as const,
+        dependencies: [`task-${baseId}-1`],
+        estimatedTime: '6 horas'
       },
       {
         title: 'Add API Validation',
         description: 'Implement request validation and error handling',
-        priority: 'medium'
+        priority: 'medium' as const,
+        dependencies: [`task-${baseId}-2`],
+        estimatedTime: '2 horas'
       }
     ];
   }
   
   if (lowerInput.includes('ui') || lowerInput.includes('frontend') || lowerInput.includes('design')) {
+    const baseId = Date.now();
     return [
       {
         title: 'Create Design System',
         description: 'Setup colors, typography, and component library',
-        priority: 'high'
+        priority: 'high' as const,
+        dependencies: [],
+        estimatedTime: '4 horas'
       },
       {
         title: 'Build Main Layout',
         description: 'Create header, footer, and navigation components',
-        priority: 'high'
+        priority: 'high' as const,
+        dependencies: [`task-${baseId}-0`],
+        estimatedTime: '3 horas'
       },
       {
         title: 'Implement Responsive Design',
         description: 'Ensure mobile-first responsive design across all screens',
-        priority: 'medium'
+        priority: 'medium' as const,
+        dependencies: [`task-${baseId}-1`],
+        estimatedTime: '5 horas'
       },
       {
         title: 'Add Loading States',
         description: 'Implement skeleton screens and loading indicators',
-        priority: 'low'
+        priority: 'low' as const,
+        dependencies: [`task-${baseId}-2`],
+        estimatedTime: '2 horas'
       }
     ];
   }
   
   // Default generic tasks
+  const baseId = Date.now();
   return [
     {
       title: 'Project Planning',
       description: `Plan and break down the requirements for: ${input}`,
-      priority: 'high'
+      priority: 'high' as const,
+      dependencies: [],
+      estimatedTime: '1 hora'
     },
     {
       title: 'Setup Development Environment',
       description: 'Configure tools, dependencies, and development workflow',
-      priority: 'medium'
+      priority: 'medium' as const,
+      dependencies: [`task-${baseId}-0`],
+      estimatedTime: '2 horas'
     },
     {
       title: 'Implementation',
       description: `Implement the main functionality for: ${input}`,
-      priority: 'high'
+      priority: 'high' as const,
+      dependencies: [`task-${baseId}-1`],
+      estimatedTime: '8 horas'
     },
     {
       title: 'Testing & Documentation',
       description: 'Write tests and update documentation',
-      priority: 'medium'
+      priority: 'medium' as const,
+      dependencies: [`task-${baseId}-2`],
+      estimatedTime: '3 horas'
     }
   ];
 }

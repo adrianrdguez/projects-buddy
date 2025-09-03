@@ -10,9 +10,12 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'ready' | 'blocked' | 'in_progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   projectId: string;
+  dependencies: string[]; // Array of task IDs that must be completed first
+  estimatedTime: string; // e.g., "2 hours", "30 minutes", "1 day"
+  progress?: number; // 0-100 for in-progress tasks
   createdAt: Date;
   updatedAt: Date;
 }
@@ -72,4 +75,20 @@ export interface ApiError {
   success: false;
   error: string;
   code?: string;
+}
+
+// Kanban Types
+export type KanbanStatus = 'ready' | 'blocked' | 'in_progress' | 'completed';
+
+export interface KanbanColumn {
+  id: KanbanStatus;
+  title: string;
+  theme: string;
+  tasks: Task[];
+}
+
+export interface KanbanColumnProps {
+  column: KanbanColumn;
+  onTaskClick?: (task: Task) => void;
+  onTaskExecute?: (task: Task) => void;
 }

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { Canvas } from "@/components/Canvas";
+import { KanbanCanvas } from "@/components/KanbanCanvas";
 import { InputBar } from "@/components/InputBar";
-import { Project, Task, GenerateTasksResponse, ProjectsResponse } from "@/lib/types";
+import { Project, Task, GenerateTasksResponse, ProjectsResponse, ExecuteTaskResponse } from "@/lib/types";
 
 export default function Dashboard() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -129,6 +129,82 @@ export default function Dashboard() {
     console.log("Task clicked:", task);
   };
 
+  const handleTaskExecute = async (task: Task) => {
+    try {
+      // Update task status to in_progress
+      setTasks(prevTasks => 
+        prevTasks.map(t => 
+          t.id === task.id 
+            ? { ...t, status: 'in_progress' as const, progress: 0 }
+            : t
+        )
+      );
+
+      const response = await fetch('/api/execute-task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          taskId: task.id
+        })
+      });
+
+      const data: ExecuteTaskResponse = await response.json();
+      
+      if (data.success) {
+        // Simulate progress updates
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+          progress += Math.random() * 20;
+          if (progress >= 100) {
+            progress = 100;
+            clearInterval(progressInterval);
+            
+            // Mark task as completed
+            setTasks(prevTasks => 
+              prevTasks.map(t => 
+                t.id === task.id 
+                  ? { ...t, status: 'completed' as const, progress: 100 }
+                  : t
+              )
+            );
+          } else {
+            // Update progress
+            setTasks(prevTasks => 
+              prevTasks.map(t => 
+                t.id === task.id 
+                  ? { ...t, progress }
+                  : t
+              )
+            );
+          }
+        }, 1000);
+        
+      } else {
+        // Reset task status on failure
+        setTasks(prevTasks => 
+          prevTasks.map(t => 
+            t.id === task.id 
+              ? { ...t, status: 'ready' as const, progress: undefined }
+              : t
+          )
+        );
+        setError(data.error || 'Failed to execute task');
+      }
+    } catch (err) {
+      // Reset task status on error
+      setTasks(prevTasks => 
+        prevTasks.map(t => 
+          t.id === task.id 
+            ? { ...t, status: 'ready' as const, progress: undefined }
+            : t
+        )
+      );
+      setError('Network error: Could not execute task');
+    }
+  };
+
   if (isLoadingProjects) {
     return (
       <div className="flex h-screen bg-[#343541] items-center justify-center">
@@ -165,10 +241,11 @@ export default function Dashboard() {
           </div>
         )}
         
-        <Canvas
+        <KanbanCanvas
           projectName={activeProject?.name || "Selecciona un proyecto"}
           tasks={projectTasks}
           onTaskClick={handleTaskClick}
+          onTaskExecute={handleTaskExecute}
           isLoading={isLoadingTasks}
         />
         
