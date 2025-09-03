@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Integration</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 8px; border: 1px solid #334155; padding: 20px; margin: 15px 0; }
+        .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        .btn-primary:hover { background: linear-gradient(135deg, #5b21b6, #7c3aed); transform: translateY(-1px); }
+        .btn-secondary { background: #374151; color: #e5e7eb; border: 1px solid #4b5563; }
+        .btn-secondary:hover { background: #4b5563; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        .input, .textarea, .select { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 6px; background: #0f172a; color: #e2e8f0; }
+        .input:focus, .textarea:focus, .select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .success { background: linear-gradient(135deg, #065f46, #047857); padding: 15px; border-radius: 8px; border: 1px solid #10b981; }
+        .error { background: linear-gradient(135deg, #991b1b, #dc2626); padding: 15px; border-radius: 8px; border: 1px solid #ef4444; }
+        .warning { background: linear-gradient(135deg, #92400e, #d97706); padding: 15px; border-radius: 8px; border: 1px solid #f59e0b; }
+        .example { background: #374151; padding: 15px; border-radius: 6px; cursor: pointer; margin: 8px 0; border: 1px solid #4b5563; transition: all 0.2s; }
+        .example:hover { background: #4b5563; border-color: #6366f1; }
+        .file-item { background: #374151; padding: 8px 12px; margin: 4px 0; border-radius: 4px; cursor: pointer; font-family: 'Monaco', 'Consolas', monospace; font-size: 13px; }
+        .file-item:hover { background: #4b5563; }
+        .file-item.selected { background: #6366f1; color: white; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .status-indicator { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+        .status-online { background: #065f46; color: #10b981; }
+        .status-offline { background: #991b1b; color: #ef4444; }
+        h1 { text-align: center; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        h2 { color: #f1f5f9; border-bottom: 2px solid #334155; padding-bottom: 8px; }
+        .workflow-step { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+        .workflow-step .icon { background: #6366f1; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        pre { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 15px; overflow-x: auto; font-size: 13px; }
+        .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid #4b5563; border-radius: 50%; border-top-color: #6366f1; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Claude Code Integration</h1>
+        <p style="text-align: center; color: #94a3b8; margin-bottom: 30px;">
+            Ejecuta tasks directamente con Claude Code CLI - Sin copiar/pegar, edición directa de archivos
+        </p>
+        
+        <!-- Status Card -->
+        <div class="card">
+            <h2>🔍 Estado del Sistema</h2>
+            <div id="system-status" class="status-indicator status-offline">
+                <div class="loading"></div> Verificando Claude Code...
+            </div>
+            <div style="margin-top: 10px;">
+                <strong>Directorio de trabajo:</strong> <span id="working-directory">-</span>
+            </div>
+            <button onclick="checkClaudeStatus()" class="btn btn-secondary" style="margin-top: 10px;">
+                🔄 Verificar Estado
+            </button>
+        </div>
+
+        <!-- Quick Examples -->
+        <div class="card">
+            <h2>🚀 Ejemplos para Claude Code</h2>
+            <div class="grid">
+                <div class="example" onclick="loadExample('Create a React component for a modern login form with email/password fields, form validation, loading states, and proper accessibility attributes', 'components/LoginForm.tsx')">
+                    <strong>🔐 Login Component</strong><br>
+                    <small>components/LoginForm.tsx</small><br>
+                    <small style="color: #94a3b8;">React + TypeScript + Validation</small>
+                </div>
+                <div class="example" onclick="loadExample('Create a Next.js API route for user authentication with JWT tokens, password hashing, rate limiting, and proper error handling', 'pages/api/auth/login.ts')">
+                    <strong>🔑 Auth API</strong><br>
+                    <small>pages/api/auth/login.ts</small><br>
+                    <small style="color: #94a3b8;">Next.js API + JWT + Security</small>
+                </div>
+                <div class="example" onclick="loadExample('Create a dashboard page with user statistics, charts using Chart.js, responsive grid layout, and loading skeletons', 'pages/dashboard.tsx')">
+                    <strong>📊 Dashboard Page</strong><br>
+                    <small>pages/dashboard.tsx</small><br>
+                    <small style="color: #94a3b8;">Charts + Grid + Responsive</small>
+                </div>
+                <div class="example" onclick="loadExample('Create utility functions for API calls with Axios, request/response interceptors, error handling, and TypeScript types', 'lib/api.ts')">
+                    <strong>🔧 API Utilities</strong><br>
+                    <small>lib/api.ts</small><br>
+                    <small style="color: #94a3b8;">Axios + Interceptors + Types</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Configuration -->
+        <div class="card">
+            <h2>⚙️ Configuración del Proyecto</h2>
+            <div class="grid">
+                <div>
+                    <label><strong>Nombre del Proyecto:</strong></label>
+                    <input type="text" id="projectName" class="input" value="my-next-app" placeholder="mi-proyecto">
+                </div>
+                <div>
+                    <label><strong>Ruta del Proyecto:</strong></label>
+                    <input type="text" id="projectPath" class="input" placeholder="/ruta/a/mi/proyecto (opcional)">
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <button onclick="listProjectFiles()" class="btn btn-secondary">
+                    📁 Explorar Archivos del Proyecto
+                </button>
+            </div>
+            <div id="project-files" style="max-height: 200px; overflow-y: auto; margin-top: 10px; display: none;"></div>
+        </div>
+
+        <!-- Task Configuration -->
+        <div class="card">
+            <h2>✍️ Configurar Task</h2>
+            <div style="margin-bottom: 15px;">
+                <label><strong>Archivo Objetivo (opcional):</strong></label>
+                <input type="text" id="targetFile" class="input" placeholder="components/Button.tsx">
+                <small style="color: #94a3b8; display: block; margin-top: 5px;">
+                    Si se especifica, Claude Code editará/creará este archivo específico
+                </small>
+            </div>
+            
+            <label><strong>Describe qué quieres crear o modificar:</strong></label>
+            <textarea id="prompt" class="textarea" rows="5" placeholder="Ejemplo: Create a reusable Button component with variants (primary, secondary, danger), different sizes, loading state, and proper TypeScript props..."></textarea>
+            <small id="char-count" style="color: #94a3b8;">0 caracteres</small>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card">
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <button onclick="sendToClaudeCode()" id="execute-btn" class="btn btn-primary" style="flex: 1;">
+                    🤖 Ejecutar con Claude Code
+                </button>
+                <button onclick="showGeneratedPrompt()" class="btn btn-secondary">
+                    👀 Ver Prompt
+                </button>
+            </div>
+        </div>
+
+        <!-- Response -->
+        <div id="response" style="display: none;"></div>
+
+        <!-- Workflow Info -->
+        <div class="card">
+            <h2>🎯 Cómo Funciona Claude Code</h2>
+            <div class="workflow-step">
+                <div class="icon">1</div>
+                <div>Tu web app envía la task al servidor</div>
+            </div>
+            <div class="workflow-step">
+                <div class="icon">2</div>
+                <div>Servidor ejecuta <code>claude edit &lt;archivo&gt; --prompt "&lt;task&gt;"</code></div>
+            </div>
+            <div class="workflow-step">
+                <div class="icon">3</div>
+                <div>Claude Code edita/crea el archivo directamente</div>
+            </div>
+            <div class="workflow-step">
+                <div class="icon">4</div>
+                <div>¡Archivo listo sin copiar/pegar! 🎉</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:3002';
+        
+        // Update character count
+        document.getElementById('prompt').addEventListener('input', function() {
+            document.getElementById('char-count').textContent = this.value.length + ' caracteres';
+        });
+
+        // Check Claude Code status on load
+        async function checkClaudeStatus() {
+            const statusDiv = document.getElementById('system-status');
+            const workingDirSpan = document.getElementById('working-directory');
+            
+            statusDiv.innerHTML = '<div class="loading"></div> Verificando...';
+            statusDiv.className = 'status-indicator status-offline';
+            
+            try {
+                const response = await fetch(SERVER_URL + '/claude-status');
+                const data = await response.json();
+                
+                if (data.claudeCodeAvailable) {
+                    statusDiv.innerHTML = '✅ Claude Code disponible y listo';
+                    statusDiv.className = 'status-indicator status-online';
+                } else {
+                    statusDiv.innerHTML = '❌ Claude Code no disponible - Instalar desde claude.ai';
+                    statusDiv.className = 'status-indicator status-offline';
+                }
+                
+                workingDirSpan.textContent = data.workingDirectory;
+                
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Servidor no disponible - Ejecuta: node server-claude-code.js';
+                statusDiv.className = 'status-indicator status-offline';
+            }
+        }
+
+        // Load example
+        function loadExample(promptText, file) {
+            document.getElementById('prompt').value = promptText;
+            document.getElementById('targetFile').value = file;
+            document.getElementById('char-count').textContent = promptText.length + ' caracteres';
+        }
+
+        // List project files
+        async function listProjectFiles() {
+            const projectPath = document.getElementById('projectPath').value.trim();
+            const filesDiv = document.getElementById('project-files');
+            
+            filesDiv.innerHTML = '<div class="loading"></div> Explorando archivos...';
+            filesDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch(SERVER_URL + '/list-project-files', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projectPath: projectPath || null })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.files.length > 0) {
+                    filesDiv.innerHTML = '<h4>📁 Archivos encontrados (click para seleccionar):</h4>';
+                    data.files.forEach(file => {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'file-item';
+                        fileDiv.textContent = file;
+                        fileDiv.onclick = () => {
+                            document.getElementById('targetFile').value = file;
+                            // Remove previous selection
+                            filesDiv.querySelectorAll('.file-item').forEach(item => 
+                                item.classList.remove('selected'));
+                            fileDiv.classList.add('selected');
+                        };
+                        filesDiv.appendChild(fileDiv);
+                    });
+                } else {
+                    filesDiv.innerHTML = '📂 No se encontraron archivos de código en el directorio';
+                }
+                
+            } catch (error) {
+                filesDiv.innerHTML = '❌ Error explorando archivos: ' + error.message;
+            }
+        }
+
+        // Execute task with Claude Code
+        async function sendToClaudeCode() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const targetFile = document.getElementById('targetFile').value.trim();
+            const projectName = document.getElementById('projectName').value.trim();
+            const projectPath = document.getElementById('projectPath').value.trim();
+
+            if (!prompt) {
+                showResponse(false, 'Por favor describe qué quieres crear o modificar');
+                return;
+            }
+
+            const executeBtn = document.getElementById('execute-btn');
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<div class="loading"></div> Ejecutando Claude Code...';
+
+            try {
+                const response = await fetch(SERVER_URL + '/send-to-claude-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        targetFile: targetFile || null,
+                        projectName: projectName || null,
+                        projectPath: projectPath || null
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    let message = '🎉 Claude Code ejecutado exitosamente!\n\n';
+                    if (data.result.file) {
+                        message += `📄 Archivo modificado: ${data.result.file}\n`;
+                    }
+                    message += `📂 Directorio: ${data.workingDirectory}\n`;
+                    if (data.result.output) {
+                        message += `\n📤 Output de Claude Code:\n${data.result.output}`;
+                    }
+                    showResponse(true, message);
+                } else {
+                    showResponse(false, data.message, data);
+                }
+
+            } catch (error) {
+                showResponse(false, 'Error conectando con el servidor: ' + error.message);
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.innerHTML = '🤖 Ejecutar con Claude Code';
+            }
+        }
+
+        // Show generated prompt
+        function showGeneratedPrompt() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const targetFile = document.getElementById('targetFile').value.trim();
+            const projectName = document.getElementById('projectName').value.trim();
+            
+            if (!prompt) {
+                showResponse(false, 'Escribe un prompt primero');
+                return;
+            }
+            
+            // Simulate the prompt building logic
+            let enhancedPrompt = '';
+            if (projectName) enhancedPrompt += `Project: ${projectName}\n`;
+            if (targetFile) {
+                enhancedPrompt += `Target file: ${targetFile}\n`;
+                enhancedPrompt += `Task: Create or edit the file with the following requirements:\n\n`;
+            } else {
+                enhancedPrompt += `General task for the project:\n\n`;
+            }
+            enhancedPrompt += prompt + '\n\n';
+            enhancedPrompt += 'Additional requirements:\n- Use TypeScript with proper type definitions\n- Include error handling and loading states where applicable\n- Follow modern React/Next.js best practices\n- Add clear comments for complex logic\n- Ensure code is production-ready\n- Create the file if it doesn\'t exist';
+            
+            showResponse(true, `📝 Prompt que se enviará a Claude Code:\n\n${enhancedPrompt}`);
+        }
+
+        // Show response
+        function showResponse(success, message, data = null) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.className = 'card ' + (success ? 'success' : 'error');
+            
+            let content = message;
+            
+            if (data && data.installInstructions) {
+                content += '\n\n📋 Instrucciones de instalación:\n';
+                data.installInstructions.forEach((step, index) => {
+                    content += `${index + 1}. ${step}\n`;
+                });
+            }
+            
+            if (data && data.error) {
+                content += '\n\n🔍 Error técnico: ' + data.error;
+            }
+            
+            responseDiv.innerHTML = `<pre style="white-space: pre-wrap; margin: 0;">${content}</pre>`;
+            responseDiv.style.display = 'block';
+
+            // Auto-hide success messages after 10 seconds
+            if (success) {
+                setTimeout(() => {
+                    responseDiv.style.display = 'none';
+                }, 10000);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            checkClaudeStatus();
+        });
+    </script>
+</body>
+</html>
