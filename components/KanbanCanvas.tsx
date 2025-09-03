@@ -78,7 +78,7 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
     <div className="flex-1 bg-background overflow-hidden">
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="p-6 pb-4">
+        <div className="p-6 pb-4 sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
           <div className="text-center">
             <h2 className="text-2xl font-medium text-foreground mb-2">
               {projectName}
@@ -90,14 +90,14 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
         </div>
 
         {/* Kanban Board */}
-        <div className="flex-1 px-6 pb-56 overflow-hidden">
+        <div className="flex-1 px-6 pb-24 overflow-y-auto">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full">
               <Loader2 className="w-8 h-8 text-foreground animate-spin mb-4" />
               <p className="text-muted-foreground text-sm">Procesando tu solicitud...</p>
             </div>
           ) : tasks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 p-4 rounded-xl bg-muted">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 p-4 rounded-xl bg-muted border border-border">
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.id}

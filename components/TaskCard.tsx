@@ -168,7 +168,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
 
   if (variant === 'kanban') {
     return (
-      <Card className="bg-card border border-border rounded-xl p-0 shadow-sm hover:shadow-md transition-all duration-200">
+      <Card className="bg-card border border-border rounded-xl p-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99]">
         <CardHeader className="pb-3" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
           <div className="flex items-center justify-between mb-2">
             <CardTitle className="text-base font-semibold text-foreground leading-tight">
@@ -257,7 +257,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
   // Default card layout (for backward compatibility)
   return (
     <Card
-      className={`bg-card border border-border rounded-xl shadow-sm transition-all duration-200 border-l-4 ${getPriorityColor(task.priority)}`}
+      className={`bg-card border border-border rounded-xl shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.99] border-l-4 ${getPriorityColor(task.priority)}`}
     >
       <CardHeader className="pb-3" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
         <div className="flex items-center justify-between">
