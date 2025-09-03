@@ -44,7 +44,7 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
     <div className={`flex flex-col h-full border rounded-xl ${theme.border} bg-card backdrop-blur-sm shadow-sm`}>
       {/* Column Header */}
       <div className={`flex items-center justify-between p-4 border-b ${theme.border}`}>
-        <h3 className="font-semibold text-sm tracking-tight ${theme.header}">{column.title}</h3>
+        <h3 className={`font-semibold text-sm tracking-tight ${theme.header}`}>{column.title}</h3>
         <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${theme.badge}`}>
           {taskCount}
         </div>

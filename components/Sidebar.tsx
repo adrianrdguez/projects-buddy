@@ -6,11 +6,11 @@ import { useTheme } from "@/components/ThemeProvider";
 export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProject }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   return (
-    <div className="w-64 h-screen bg-muted flex flex-col border-r">
+    <div className="w-64 h-screen bg-[#F8F5F0] flex flex-col border-r">
       <div className="p-4 flex items-center gap-2">
         <Button
           onClick={onNewProject}
-          className="w-full justify-start gap-2 bg-card border border-border hover:bg-accent text-foreground text-sm py-2.5"
+          className="w-full justify-start gap-2 bg-card border border-border hover:bg-accent text-foreground text-sm py-2.5 rounded-full"
         >
           <Plus className="w-4 h-4" />
           Nuevo proyecto
@@ -20,7 +20,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
           size="icon"
           variant="ghost"
           onClick={toggleTheme}
-          className="ml-2"
+          className="ml-2 rounded-full"
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -33,7 +33,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
             <button
               key={project.id}
               onClick={() => onProjectSelect(project.id)}
-              className={`w-full text-left p-3 rounded-lg transition-colors flex items-center gap-3 text-sm border ${
+              className={`w-full text-left p-3 rounded-xl transition-colors flex items-center gap-3 text-sm border ${
                 activeProjectId === project.id
                   ? "bg-card text-foreground border-border shadow-sm"
                   : "text-foreground/70 hover:bg-accent hover:text-foreground border-transparent"

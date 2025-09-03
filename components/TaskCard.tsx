@@ -206,7 +206,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
               </div>
               <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  className="bg-primary/80 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${task.progress}%` }}
                 />
               </div>

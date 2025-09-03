@@ -7,7 +7,7 @@
     /* Pastel Light Mode (default) */
     /* Base colors from requirements */
     /* Backgrounds */
-    --background: 210 20% 98%; /* #F9FAFB */
+    --background: 40 100% 97%; /* #FFFAF0 warm off-white */
     --foreground: 220 26% 10%; /* #111827 */
     --card: 0 0% 100%; /* #FFFFFF */
     --card-foreground: 220 26% 10%;
@@ -19,9 +19,9 @@
     --secondary: 42 96% 57%; /* #FBBF24 */
     --secondary-foreground: 26 14% 15%;
     /* Semantic */
-    --muted: 210 24% 96%; /* subtle gray */
+    --muted: 40 20% 96%; /* #F8F5F0 sidebar/panels */
     --muted-foreground: 220 9% 46%;
-    --accent: 210 24% 96%;
+    --accent: 40 20% 96%;
     --accent-foreground: 220 26% 10%;
     --destructive: 0 87% 71%; /* #F87171 */
     --destructive-foreground: 0 0% 100%;
