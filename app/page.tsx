@@ -1,99 +1,175 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Canvas } from "@/components/Canvas";
 import { InputBar } from "@/components/InputBar";
-import { Project, Task } from "@/lib/types";
+import { Project, Task, GenerateTasksResponse, ProjectsResponse } from "@/lib/types";
 
 export default function Dashboard() {
-  const [projects] = useState<Project[]>([
-    {
-      id: "1",
-      name: "App Fotógrafos de Surf",
-      description: "Aplicación para fotógrafos de surf",
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [activeProjectId, setActiveProjectId] = useState<string>("1");
+  // Load projects on component mount
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
-  const [tasks] = useState<Task[]>([
-    {
-      id: "1",
-      title: "Setup env",
-      description: "Configurar el entorno de desarrollo con las herramientas necesarias",
-      status: "pending",
-      projectId: "1",
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: "2",
-      title: "Crear UI",
-      description: "Diseñar y desarrollar la interfaz de usuario",
-      status: "in_progress",
-      projectId: "1",
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: "3",
-      title: "API Setup",
-      description: "Configurar la API backend y endpoints necesarios",
-      status: "pending",
-      projectId: "1",
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: "4",
-      title: "Auth flow",
-      description: "Implementar el flujo de autenticación de usuarios",
-      status: "pending",
-      projectId: "1",
-      createdAt: new Date(),
-      updatedAt: new Date()
+  // Set active project when projects are loaded
+  useEffect(() => {
+    if (projects.length > 0 && !activeProjectId) {
+      setActiveProjectId(projects[0].id);
     }
-  ]);
+  }, [projects, activeProjectId]);
+
+  const loadProjects = async () => {
+    try {
+      setIsLoadingProjects(true);
+      const response = await fetch('/api/projects');
+      const data: ProjectsResponse = await response.json();
+      
+      if (data.success) {
+        setProjects(data.projects);
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to load projects');
+      }
+    } catch (err) {
+      setError('Network error: Could not load projects');
+    } finally {
+      setIsLoadingProjects(false);
+    }
+  };
+
+  const generateTasks = async (input: string) => {
+    if (!activeProjectId) {
+      setError('No project selected');
+      return;
+    }
+
+    try {
+      setIsLoadingTasks(true);
+      setError(null);
+      
+      const response = await fetch('/api/generate-tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          input,
+          projectId: activeProjectId
+        })
+      });
+
+      const data: GenerateTasksResponse = await response.json();
+      
+      if (data.success) {
+        setTasks(data.tasks);
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to generate tasks');
+      }
+    } catch (err) {
+      setError('Network error: Could not generate tasks');
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  const createNewProject = async () => {
+    const projectName = prompt('Nombre del nuevo proyecto:');
+    if (!projectName) return;
+
+    const projectDescription = prompt('Descripción (opcional):');
+
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: projectName,
+          description: projectDescription || ''
+        })
+      });
+
+      const data: ProjectsResponse = await response.json();
+      
+      if (data.success && data.projects.length > 0) {
+        const newProject = data.projects[0];
+        setProjects(prev => [newProject, ...prev]);
+        setActiveProjectId(newProject.id);
+        setTasks([]); // Clear tasks for new project
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to create project');
+      }
+    } catch (err) {
+      setError('Network error: Could not create project');
+    }
+  };
 
   const activeProject = projects.find(p => p.id === activeProjectId);
   const projectTasks = tasks.filter(t => t.projectId === activeProjectId);
 
   const handleProjectSelect = (projectId: string) => {
     setActiveProjectId(projectId);
-  };
-
-  const handleNewProject = () => {
-    // TODO: Implement new project creation
-    console.log("Create new project");
+    // Clear tasks when switching projects (in a real app, you'd load tasks for the selected project)
+    setTasks([]);
+    setError(null);
   };
 
   const handleTaskClick = (task: Task) => {
-    // TODO: Implement task details/editing
     console.log("Task clicked:", task);
   };
 
-  const handleInputSubmit = (message: string) => {
-    // TODO: Implement AI task creation
-    console.log("New task:", message);
-  };
+  if (isLoadingProjects) {
+    return (
+      <div className="flex h-screen bg-[#343541] items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-4 mx-auto"></div>
+          <p>Cargando proyectos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#343541]">
       <Sidebar
         projects={projects}
-        activeProjectId={activeProjectId}
+        activeProjectId={activeProjectId || undefined}
         onProjectSelect={handleProjectSelect}
-        onNewProject={handleNewProject}
+        onNewProject={createNewProject}
       />
       
       <div className="flex flex-col flex-1">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 m-4">
+            <div className="flex items-center">
+              <div className="text-red-600 font-medium">Error</div>
+              <button 
+                onClick={() => setError(null)}
+                className="ml-auto text-red-400 hover:text-red-600"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-red-700 text-sm mt-1">{error}</p>
+          </div>
+        )}
+        
         <Canvas
-          projectName={activeProject?.name || ""}
+          projectName={activeProject?.name || "Selecciona un proyecto"}
           tasks={projectTasks}
           onTaskClick={handleTaskClick}
+          isLoading={isLoadingTasks}
         />
         
         <div className="pb-32">
@@ -101,7 +177,11 @@ export default function Dashboard() {
         </div>
       </div>
       
-      <InputBar onSubmit={handleInputSubmit} />
+      <InputBar 
+        onSubmit={generateTasks} 
+        isLoading={isLoadingTasks}
+        placeholder={activeProject ? "Describe las tareas para tu proyecto..." : "Selecciona un proyecto primero"}
+      />
     </div>
   );
 }

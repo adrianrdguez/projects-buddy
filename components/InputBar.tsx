@@ -2,15 +2,19 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Mic } from "lucide-react";
+import { Send, Mic, Loader2 } from "lucide-react";
 import { InputBarProps } from "@/lib/types";
 
-export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí..." }: InputBarProps) {
+interface ExtendedInputBarProps extends InputBarProps {
+  isLoading?: boolean;
+}
+
+export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...", isLoading = false }: ExtendedInputBarProps) {
   const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim()) {
+    if (message.trim() && !isLoading) {
       onSubmit(message.trim());
       setMessage("");
     }
@@ -24,18 +28,22 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí..." 
   };
 
   const hasText = message.trim().length > 0;
+  const isDisabled = isLoading || !hasText;
 
   return (
     <div className="fixed bottom-0 left-64 right-0 p-6">
       <div className="max-w-3xl mx-auto">
         <form onSubmit={handleSubmit} className="relative">
-          <div className="flex items-center bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-200 px-4 py-3">
+          <div className={`flex items-center bg-white border border-gray-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 px-4 py-3 ${
+            isLoading ? 'opacity-75' : ''
+          }`}>
             <input
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
-              placeholder={placeholder}
-              className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder:text-gray-500 text-base"
+              placeholder={isLoading ? "Generando tareas..." : placeholder}
+              disabled={isLoading}
+              className="flex-1 bg-transparent border-none outline-none text-gray-900 placeholder:text-gray-500 text-base disabled:cursor-not-allowed"
             />
             
             <div className="flex items-center ml-2 relative">
@@ -43,7 +51,8 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí..." 
                 <Button
                   type="button"
                   size="icon"
-                  className={`bg-transparent hover:bg-gray-100 text-gray-600 rounded-full w-8 h-8 transition-all duration-300 ease-out ${
+                  disabled={isLoading}
+                  className={`bg-transparent hover:bg-gray-100 text-gray-600 rounded-full w-8 h-8 transition-all duration-300 ease-out disabled:opacity-50 ${
                     hasText 
                       ? 'transform -translate-x-10' 
                       : 'transform translate-x-10'
@@ -55,13 +64,18 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí..." 
                 <Button
                   type="submit"
                   size="icon"
-                  className={`bg-gray-900 hover:bg-gray-800 text-white rounded-full w-8 h-8 ml-2 transition-all duration-300 ease-out ${
+                  disabled={isDisabled}
+                  className={`bg-gray-900 hover:bg-gray-800 text-white rounded-full w-8 h-8 ml-2 transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed ${
                     hasText 
                       ? 'transform translate-x-0 opacity-100 scale-100' 
                       : 'transform translate-x-0 opacity-0 scale-75 pointer-events-none'
                   }`}
                 >
-                  <Send className="w-4 h-4" />
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -69,7 +83,10 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí..." 
         </form>
         
         <p className="text-xs text-gray-500 text-center mt-2">
-          Presiona Enter para enviar, Shift + Enter para nueva línea
+          {isLoading 
+            ? "Procesando con IA..." 
+            : "Presiona Enter para enviar, Shift + Enter para nueva línea"
+          }
         </p>
       </div>
     </div>
