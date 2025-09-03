@@ -6,33 +6,33 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
     switch (theme) {
       case 'green':
         return {
-          header: 'bg-green-100 border-green-200 text-green-800',
-          badge: 'bg-green-500 text-white',
-          border: 'border-green-200'
+          header: 'text-[#E4E4E7]',
+          badge: 'bg-green-500/20 text-green-300',
+          border: 'border-[#3A3B4C]'
         };
       case 'yellow':
         return {
-          header: 'bg-yellow-100 border-yellow-200 text-yellow-800',
-          badge: 'bg-yellow-500 text-white',
-          border: 'border-yellow-200'
+          header: 'text-[#E4E4E7]',
+          badge: 'bg-yellow-500/20 text-yellow-300',
+          border: 'border-[#3A3B4C]'
         };
       case 'blue':
         return {
-          header: 'bg-blue-100 border-blue-200 text-blue-800',
-          badge: 'bg-blue-500 text-white',
-          border: 'border-blue-200'
+          header: 'text-[#E4E4E7]',
+          badge: 'bg-blue-500/20 text-blue-300',
+          border: 'border-[#3A3B4C]'
         };
       case 'gray':
         return {
-          header: 'bg-gray-100 border-gray-200 text-gray-800',
-          badge: 'bg-gray-500 text-white',
-          border: 'border-gray-200'
+          header: 'text-[#E4E4E7]',
+          badge: 'bg-gray-500/20 text-gray-300',
+          border: 'border-[#3A3B4C]'
         };
       default:
         return {
-          header: 'bg-gray-100 border-gray-200 text-gray-800',
-          badge: 'bg-gray-500 text-white',
-          border: 'border-gray-200'
+          header: 'text-[#E4E4E7]',
+          badge: 'bg-gray-500/20 text-gray-300',
+          border: 'border-[#3A3B4C]'
         };
     }
   };
@@ -41,17 +41,17 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
   const taskCount = column.tasks.length;
 
   return (
-    <div className={`flex flex-col h-full border rounded-lg ${theme.border} bg-white`}>
+    <div className={`flex flex-col h-full border rounded-xl ${theme.border} bg-[#2A2B3A]/80 backdrop-blur-sm shadow-lg`}>
       {/* Column Header */}
-      <div className={`flex items-center justify-between p-4 border-b rounded-t-lg ${theme.header} ${theme.border}`}>
-        <h3 className="font-semibold text-sm">{column.title}</h3>
+      <div className={`flex items-center justify-between p-4 border-b ${theme.border}`}>
+        <h3 className="font-semibold text-sm tracking-tight text-[#E4E4E7]">{column.title}</h3>
         <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${theme.badge}`}>
           {taskCount}
         </div>
       </div>
 
       {/* Tasks Container */}
-      <div className="flex-1 p-3 space-y-3 overflow-y-auto min-h-0">
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto min-h-0 custom-scrollbar">
         {column.tasks.length > 0 ? (
           column.tasks.map((task) => (
             <TaskCard
@@ -63,7 +63,7 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
             />
           ))
         ) : (
-          <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
+          <div className="flex items-center justify-center h-32 text-[#A1A1AA] text-sm">
             <div className="text-center">
               <div className="mb-2 opacity-50">
                 <svg

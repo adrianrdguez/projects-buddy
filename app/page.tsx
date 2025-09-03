@@ -248,10 +248,7 @@ export default function Dashboard() {
           onTaskExecute={handleTaskExecute}
           isLoading={isLoadingTasks}
         />
-        
-        <div className="pb-32">
-          {/* Spacer for fixed input bar */}
-        </div>
+
       </div>
       
       <InputBar 

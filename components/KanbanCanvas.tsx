@@ -75,29 +75,29 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
   }, [tasks]);
 
   return (
-    <div className="flex-1 bg-[#343541] overflow-hidden">
+    <div className="flex-1 bg-[#1E1E2F] overflow-hidden">
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="p-6 pb-4">
           <div className="text-center">
-            <h2 className="text-2xl font-medium text-white mb-2">
+            <h2 className="text-2xl font-medium text-[#E4E4E7] mb-2">
               {projectName}
             </h2>
-            <p className="text-gray-400 text-sm">
+            <p className="text-[#A1A1AA] text-sm">
               {isLoading ? "Generando tareas con IA..." : "Tablero Kanban con dependencias"}
             </p>
           </div>
         </div>
 
         {/* Kanban Board */}
-        <div className="flex-1 px-6 pb-6 overflow-hidden">
+        <div className="flex-1 px-6 pb-56 overflow-hidden">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 text-white animate-spin mb-4" />
-              <p className="text-gray-400 text-sm">Procesando tu solicitud...</p>
+              <Loader2 className="w-8 h-8 text-[#E4E4E7] animate-spin mb-4" />
+              <p className="text-[#A1A1AA] text-sm">Procesando tu solicitud...</p>
             </div>
           ) : tasks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 h-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.id}
@@ -110,7 +110,7 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-gray-400 mb-4">
+                <div className="text-[#A1A1AA] mb-4">
                   <svg
                     className="w-16 h-16 mx-auto mb-4 opacity-50"
                     fill="none"
@@ -125,10 +125,10 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-white mb-2">
+                <h3 className="text-lg font-medium text-[#E4E4E7] mb-2">
                   No hay tareas aún
                 </h3>
-                <p className="text-gray-400 text-sm max-w-md mx-auto">
+                <p className="text-[#A1A1AA] text-sm max-w-md mx-auto">
                   Usa la barra de entrada de abajo para describir lo que quieres hacer y la IA generará tareas automáticamente con sus dependencias.
                 </p>
               </div>

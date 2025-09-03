@@ -60,24 +60,24 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Completado</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">Completado</div>;
       case 'in_progress':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">En progreso</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300">En progreso</div>;
       case 'blocked':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Bloqueado</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">Bloqueado</div>;
       default:
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Listo</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300">Listo</div>;
     }
   };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Alta</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300">Alta</div>;
       case 'medium':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Media</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">Media</div>;
       default:
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Baja</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">Baja</div>;
     }
   };
 
@@ -168,17 +168,17 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
 
   if (variant === 'kanban') {
     return (
-      <Card className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300">
+      <Card className="bg-[#2F303E] border border-[#3A3B4C] rounded-xl p-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
         <CardHeader className="pb-3" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
           <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-sm font-semibold text-gray-900 leading-tight">
+            <CardTitle className="text-sm font-semibold text-[#E4E4E7] leading-tight">
               {task.title}
             </CardTitle>
             {getPriorityBadge(task.priority)}
           </div>
           
           {/* Time estimate and dependencies */}
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-xs text-[#A1A1AA]">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               <span>{task.estimatedTime || '1 hora'}</span>
@@ -193,20 +193,20 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
         </CardHeader>
         
         <CardContent>
-          <p className="text-gray-600 text-xs leading-relaxed mb-3 line-clamp-2">
+          <p className="text-[#A1A1AA] text-xs leading-relaxed mb-3 line-clamp-2">
             {task.description}
           </p>
           
           {/* Progress bar for in-progress tasks */}
           {task.status === 'in_progress' && task.progress !== undefined && (
             <div className="mb-3">
-              <div className="flex justify-between text-xs text-gray-600 mb-1">
+              <div className="flex justify-between text-xs text-[#A1A1AA] mb-1">
                 <span>Progreso</span>
                 <span>{task.progress}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-[#3A3B4C] rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${task.progress}%` }}
                 />
               </div>
@@ -215,17 +215,17 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
 
           {/* Dependencies list */}
           {task.dependencies && task.dependencies.length > 0 && (
-            <div className="mb-3 p-2 bg-gray-50 rounded-lg">
-              <div className="text-xs text-gray-600 font-medium mb-1">Dependencias:</div>
+            <div className="mb-3 p-2 bg-[#2A2B3A] rounded-lg border border-[#3A3B4C]">
+              <div className="text-xs text-[#A1A1AA] font-medium mb-1">Dependencias:</div>
               <div className="space-y-1">
                 {task.dependencies.slice(0, 2).map((depId) => (
-                  <div key={depId} className="text-xs text-gray-500 flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-gray-400" />
+                  <div key={depId} className="text-xs text-[#A1A1AA] flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-[#3A3B4C]" />
                     Task {depId.slice(-4)}
                   </div>
                 ))}
                 {task.dependencies.length > 2 && (
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-[#A1A1AA]">
                     +{task.dependencies.length - 2} más...
                   </div>
                 )}
@@ -235,16 +235,16 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           
           {/* Execution feedback */}
           {executionResult && (
-            <div className="flex items-center gap-2 mb-3 p-2 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-              <p className="text-green-700 text-xs">{executionResult}</p>
+            <div className="flex items-center gap-2 mb-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <CheckCircle className="w-4 h-4 text-green-300 flex-shrink-0" />
+              <p className="text-green-300 text-xs">{executionResult}</p>
             </div>
           )}
           
           {executionError && (
-            <div className="flex items-center gap-2 mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-              <p className="text-red-700 text-xs">{executionError}</p>
+            <div className="flex items-center gap-2 mb-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-red-300 flex-shrink-0" />
+              <p className="text-red-300 text-xs">{executionError}</p>
             </div>
           )}
           
@@ -257,32 +257,32 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
   // Default card layout (for backward compatibility)
   return (
     <Card
-      className={`bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-300 border-l-4 ${getPriorityColor(task.priority)}`}
+      className={`bg-[#2F303E] border border-[#3A3B4C] rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] border-l-4 ${getPriorityColor(task.priority)}`}
     >
       <CardHeader className="pb-3" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-900">{task.title}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-[#E4E4E7]">{task.title}</CardTitle>
           {getStatusBadge(task.status)}
         </div>
-        <div className="text-xs text-gray-500 capitalize">
+        <div className="text-xs text-[#A1A1AA] capitalize">
           Prioridad: {task.priority}
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-600 text-sm leading-relaxed mb-4">{task.description}</p>
+        <p className="text-[#A1A1AA] text-sm leading-relaxed mb-4">{task.description}</p>
         
         {/* Execution feedback */}
         {executionResult && (
-          <div className="flex items-center gap-2 mb-3 p-2 bg-green-50 border border-green-200 rounded-lg">
-            <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-            <p className="text-green-700 text-xs">{executionResult}</p>
+          <div className="flex items-center gap-2 mb-3 p-2 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <CheckCircle className="w-4 h-4 text-green-300 flex-shrink-0" />
+            <p className="text-green-300 text-xs">{executionResult}</p>
           </div>
         )}
         
         {executionError && (
-          <div className="flex items-center gap-2 mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
-            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-            <p className="text-red-700 text-xs">{executionError}</p>
+          <div className="flex items-center gap-2 mb-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <AlertCircle className="w-4 h-4 text-red-300 flex-shrink-0" />
+            <p className="text-red-300 text-xs">{executionError}</p>
           </div>
         )}
         
@@ -290,7 +290,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           onClick={handleExecuteTask}
           disabled={isExecuting}
           size="sm"
-          className="w-full bg-gray-900 hover:bg-gray-800 text-white disabled:opacity-50"
+          className="w-full bg-[#2A2B3A] hover:bg-[#34364A] text-[#E4E4E7] rounded-lg disabled:opacity-50"
         >
           {isExecuting ? (
             <>
