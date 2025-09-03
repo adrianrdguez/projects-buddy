@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Integration Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 20px; margin: 10px 0; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; }
+        .btn-primary { background: #7c3aed; color: white; }
+        .btn-primary:hover { background: #6d28d9; }
+        .btn-secondary { background: #6b7280; color: white; }
+        .btn-secondary:hover { background: #4b5563; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .input { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; }
+        .textarea { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical; }
+        .success { background: #ecfdf5; color: #065f46; padding: 10px; border-radius: 6px; border: 1px solid #a7f3d0; }
+        .error { background: #fef2f2; color: #991b1b; padding: 10px; border-radius: 6px; border: 1px solid #fca5a5; }
+        .example { background: #f3f4f6; padding: 12px; border-radius: 6px; cursor: pointer; margin: 5px 0; }
+        .example:hover { background: #e5e7eb; }
+    </style>
+</head>
+<body style="background: #f9fafb;">
+    <div class="container">
+        <h1 style="text-align: center; margin: 20px 0; color: #111827;">🚀 Cursor Integration Test</h1>
+        
+        <!-- Server Status -->
+        <div class="card">
+            <h3>Estado del Servidor</h3>
+            <div id="server-status">Verificando...</div>
+            <button onclick="checkServer()" class="btn btn-secondary" style="margin-top: 10px;">Verificar</button>
+        </div>
+
+        <!-- Examples -->
+        <div class="card">
+            <h3>🎯 Ejemplos rápidos</h3>
+            <div class="example" onclick="loadExample('Create a login component with email/password fields, form validation using React Hook Form and Zod, error handling, loading states, and integration with Supabase auth', 'components/LoginForm.tsx')">
+                <strong>Login Component</strong><br>
+                <small>components/LoginForm.tsx</small>
+            </div>
+            <div class="example" onclick="loadExample('Create a REST API endpoint for user profile management with GET, PUT operations, input validation, error handling, and Supabase database integration', 'app/api/profile/route.ts')">
+                <strong>API Endpoint</strong><br>
+                <small>app/api/profile/route.ts</small>
+            </div>
+            <div class="example" onclick="loadExample('Create a dashboard page with user stats, recent activity feed, responsive grid layout using Tailwind CSS, loading skeletons, and error boundaries', 'app/dashboard/page.tsx')">
+                <strong>Dashboard Page</strong><br>
+                <small>app/dashboard/page.tsx</small>
+            </div>
+        </div>
+
+        <!-- Config -->
+        <div class="card">
+            <h3>⚙️ Configuración</h3>
+            <label>Proyecto:</label>
+            <input type="text" id="projectName" class="input" value="my-next-app" style="margin: 5px 0;">
+            
+            <label>Archivo objetivo:</label>
+            <input type="text" id="targetFile" class="input" placeholder="components/Button.tsx" style="margin: 5px 0;">
+        </div>
+
+        <!-- Prompt -->
+        <div class="card">
+            <h3>✍️ Describe qué quieres crear</h3>
+            <textarea id="prompt" class="textarea" rows="4" placeholder="Ejemplo: Create a responsive navbar component with logo, navigation links, mobile menu toggle, and dark mode support using Tailwind CSS..."></textarea>
+            <small id="char-count">0 caracteres</small>
+        </div>
+
+        <!-- Buttons -->
+        <div class="card">
+            <button onclick="sendToCursor()" id="send-btn" class="btn btn-primary" style="margin-right: 10px;">
+                📤 Enviar a Cursor
+            </button>
+            <button onclick="copyPrompt()" id="copy-btn" class="btn btn-secondary">
+                📋 Solo Copiar
+            </button>
+        </div>
+
+        <!-- Response -->
+        <div id="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:3001';
+        
+        // Update character count
+        document.getElementById('prompt').addEventListener('input', function() {
+            document.getElementById('char-count').textContent = this.value.length + ' caracteres';
+        });
+
+        // Check server status
+        async function checkServer() {
+            const statusDiv = document.getElementById('server-status');
+            statusDiv.innerHTML = 'Verificando...';
+            
+            try {
+                const response = await fetch(SERVER_URL + '/health');
+                const data = await response.json();
+                statusDiv.innerHTML = '<span style="color: #059669;">✅ Servidor online en localhost:3001</span>';
+            } catch (error) {
+                statusDiv.innerHTML = '<span style="color: #dc2626;">❌ Servidor offline - Ejecuta: npm start</span>';
+            }
+        }
+
+        // Load example
+        function loadExample(promptText, file) {
+            document.getElementById('prompt').value = promptText;
+            document.getElementById('targetFile').value = file;
+            document.getElementById('char-count').textContent = promptText.length + ' caracteres';
+        }
+
+        // Send to Cursor
+        async function sendToCursor() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const targetFile = document.getElementById('targetFile').value.trim();
+            const projectName = document.getElementById('projectName').value.trim();
+
+            if (!prompt) {
+                showResponse(false, 'Por favor ingresa un prompt');
+                return;
+            }
+
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '⏳ Enviando...';
+
+            try {
+                const response = await fetch(SERVER_URL + '/send-to-cursor', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        targetFile: targetFile || null,
+                        projectName: projectName || null
+                    })
+                });
+
+                const data = await response.json();
+                showResponse(data.success, data.message);
+
+            } catch (error) {
+                showResponse(false, 'Error conectando con el servidor: ' + error.message);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '📤 Enviar a Cursor';
+            }
+        }
+
+        // Copy prompt only
+        async function copyPrompt() {
+            const prompt = document.getElementById('prompt').value.trim();
+            
+            if (!prompt) {
+                showResponse(false, 'Por favor ingresa un prompt');
+                return;
+            }
+
+            const copyBtn = document.getElementById('copy-btn');
+            copyBtn.disabled = true;
+            copyBtn.innerHTML = '⏳ Copiando...';
+
+            try {
+                const response = await fetch(SERVER_URL + '/copy-prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+                showResponse(data.success, data.message);
+
+            } catch (error) {
+                showResponse(false, 'Error: ' + error.message);
+            } finally {
+                copyBtn.disabled = false;
+                copyBtn.innerHTML = '📋 Solo Copiar';
+            }
+        }
+
+        // Show response
+        function showResponse(success, message) {
+            const responseDiv = document.getElementById('response');
+            responseDiv.className = 'card ' + (success ? 'success' : 'error');
+            responseDiv.innerHTML = message;
+            responseDiv.style.display = 'block';
+
+            // Auto-hide success messages
+            if (success) {
+                setTimeout(() => {
+                    responseDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Check server on load
+        checkServer();
+    </script>
+</body>
+</html>
