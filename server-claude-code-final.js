@@ -248,29 +248,69 @@ async function openInCursor(filePath) {
 }
 
 // Limpiar output de Claude Code
+// Limpiar output de Claude Code (VERSIÓN MEJORADA)
 function cleanOutput(output) {
   console.log('🧹 Limpiando output de Claude...');
+  console.log(`📏 Longitud original: ${output.length} caracteres`);
   
-  // Remover mensajes de rate limiting y otros metadatos
-  let cleaned = output.replace(/5-hour limit reached.*?\n/g, '');
-  cleaned = cleaned.replace(/resets \d+pm.*?\n/g, '');
-  cleaned = cleaned.replace(/Claude Code.*?\n/g, '');
-  
-  // Buscar bloques de código entre ```
-  const codeBlockRegex = /```[\w]*\n([\s\S]*?)```/g;
-  const matches = [...cleaned.matchAll(codeBlockRegex)];
+  // Buscar bloques de código entre ```tsx, ```typescript, ```javascript, etc.
+  const codeBlockRegex = /```(?:tsx|typescript|ts|javascript|js)?\s*\n([\s\S]*?)```/g;
+  const matches = [...output.matchAll(codeBlockRegex)];
   
   if (matches.length > 0) {
     console.log(`📦 Encontrados ${matches.length} bloques de código`);
+    
     // Usar el bloque más grande (probablemente el componente principal)
     const largestBlock = matches.reduce((prev, current) => 
       current[1].length > prev[1].length ? current : prev
     );
-    return largestBlock[1].trim();
+    
+    const extractedCode = largestBlock[1].trim();
+    console.log(`✅ Código extraído: ${extractedCode.length} caracteres`);
+    console.log(`🔍 Primeras líneas: ${extractedCode.substring(0, 100)}...`);
+    
+    return extractedCode;
   }
   
-  // Si no hay bloques de código, devolver el contenido limpio
-  return cleaned.trim();
+  console.log('⚠️  No se encontraron bloques de código con ```');
+  
+  // Como fallback, buscar líneas que empiecen con import, interface, const, etc.
+  const lines = output.split('\n');
+  const codeLines = [];
+  let inCodeSection = false;
+  let braceCount = 0;
+  
+  for (const line of lines) {
+    // Detectar inicio de código
+    if (line.trim().match(/^(import|export|interface|type|const|class|function)/)) {
+      inCodeSection = true;
+      console.log(`🎯 Inicio de código detectado: ${line.trim()}`);
+    }
+    
+    if (inCodeSection) {
+      codeLines.push(line);
+      
+      // Contar llaves para saber cuándo termina el componente
+      braceCount += (line.match(/{/g) || []).length;
+      braceCount -= (line.match(/}/g) || []).length;
+      
+      // Si llegamos a 0 llaves y tenemos export default, probablemente terminamos
+      if (braceCount === 0 && line.includes('export default') && codeLines.length > 10) {
+        console.log(`🏁 Final de código detectado en línea: ${line.trim()}`);
+        break;
+      }
+    }
+  }
+  
+  if (codeLines.length > 0) {
+    const extractedCode = codeLines.join('\n').trim();
+    console.log(`📝 Extraídas ${codeLines.length} líneas de código`);
+    console.log(`✅ Código fallback: ${extractedCode.length} caracteres`);
+    return extractedCode;
+  }
+  
+  console.log('❌ No se pudo extraer código válido');
+  return output.trim();
 }
 
 // Extraer código de la respuesta conversacional de Claude
