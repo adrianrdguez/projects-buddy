@@ -47,30 +47,21 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
                 className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base disabled:cursor-not-allowed"
               />
               
-              <div className="flex items-center ml-2 relative">
-                <div className="flex items-center">
-                  <Button
-                    type="button"
-                    size="icon"
-                    disabled={isLoading}
-                    className={`bg-transparent hover:bg-accent text-muted-foreground rounded-full w-8 h-8 transition-all duration-300 ease-out disabled:opacity-50 ${
-                      hasText 
-                        ? 'transform -translate-x-10' 
-                        : 'transform translate-x-10'
-                    }`}
-                  >
-                    <Mic className="w-4 h-4" />
-                  </Button>
-                  
+              <div className="flex items-center ml-2">
+                <Button
+                  type="button"
+                  size="icon"
+                  disabled={isLoading}
+                  className="bg-transparent hover:bg-accent text-muted-foreground rounded-full w-8 h-8 transition-all duration-300 ease-out disabled:opacity-50"
+                >
+                  <Mic className="w-4 h-4" />
+                </Button>
+                {(hasText || isLoading) && (
                   <Button
                     type="submit"
                     size="icon"
                     disabled={isDisabled}
-                    className={`bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-8 h-8 ml-2 transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed ${
-                      hasText 
-                        ? 'transform translate-x-0 opacity-100 scale-100' 
-                        : 'transform translate-x-0 opacity-0 scale-75 pointer-events-none'
-                    }`}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-8 h-8 ml-2 transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -78,7 +69,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
                       <Send className="w-4 h-4" />
                     )}
                   </Button>
-                </div>
+                )}
               </div>
             </div>
           </form>

@@ -78,7 +78,7 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
     <div className="flex-1 bg-background overflow-hidden">
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="p-6 pb-4 sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <div className="p-6 pb-4 sticky top-0 z-10 bg-background">
           <div className="text-center">
             <h2 className="text-2xl font-medium text-foreground mb-2">
               {projectName}
