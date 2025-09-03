@@ -54,6 +54,23 @@ export default function Dashboard() {
     try {
       setIsLoadingTasks(true);
       setError(null);
+
+      // Optimistic user-input task at the top of Ready column
+      const now = new Date();
+      const optimisticTask: Task = {
+        id: `user-input-${now.getTime()}`,
+        title: input.length > 80 ? input.slice(0, 80) + '…' : input,
+        description: input,
+        status: 'ready',
+        priority: 'medium',
+        projectId: activeProjectId,
+        dependencies: [],
+        estimatedTime: '1 hora',
+        createdAt: now,
+        updatedAt: now,
+      };
+      // Show only the user's input as a single card
+      setTasks([optimisticTask]);
       
       const response = await fetch('/api/generate-tasks', {
         method: 'POST',
@@ -69,7 +86,8 @@ export default function Dashboard() {
       const data: GenerateTasksResponse = await response.json();
       
       if (data.success) {
-        setTasks(data.tasks);
+        // Keep ONLY the optimistic user input card visible
+        setTasks([optimisticTask]);
         setError(null);
       } else {
         setError(data.error || 'Failed to generate tasks');
