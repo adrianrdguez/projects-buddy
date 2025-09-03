@@ -106,39 +106,59 @@ IMPORTANT: Provide ONLY the complete file content. No markdown blocks, no explan
     process.on('close', async (code) => {
       console.log(`📊 Recibidos ${stdout.length} caracteres de Claude`);
       
-      if (code === 0 && stdout.trim()) {
-        try {
-          // Limpiar contenido
-          let cleanContent = cleanOutput(stdout);
-          
-          // Escribir archivo
-          const filePath = path.join(workingDir, targetFile);
-          const fileDir = path.dirname(filePath);
-          
-          await fs.mkdir(fileDir, { recursive: true });
-          await fs.writeFile(filePath, cleanContent, 'utf8');
-          
-          console.log(`✅ Archivo creado: ${targetFile}`);
-          console.log(`📂 Ruta: ${filePath}`);
-          
-          // ABRIR EN CURSOR
-          console.log('🚀 === ABRIENDO EN CURSOR ===');
-          const opened = await openInCursor(filePath);
-          console.log(`🎯 Cursor abierto: ${opened ? 'SÍ' : 'NO'}`);
-          
-          resolve({
-            success: true,
-            file: targetFile,
-            path: filePath,
-            cursorOpened: opened,
-            contentPreview: cleanContent.substring(0, 200) + '...'
-          });
-          
-        } catch (error) {
-          reject(new Error(`Error escribiendo archivo: ${error.message}`));
+      // Check for rate limiting or other specific errors
+      if (code !== 0) {
+        let errorMessage = `Claude Code failed with exit code ${code}`;
+        
+        if (stdout.includes('5-hour limit reached') || stdout.includes('limit reached')) {
+          errorMessage = 'Claude Code rate limit reached. Please try again later.';
+        } else if (stdout.includes('authentication') || stdout.includes('unauthorized')) {
+          errorMessage = 'Claude Code authentication error. Please check your credentials.';
+        } else if (stderr) {
+          errorMessage += ` Stderr: ${stderr}`;
+        } else if (stdout) {
+          errorMessage += ` Output: ${stdout.substring(0, 200)}`;
         }
-      } else {
-        reject(new Error(`Claude Code failed. Code: ${code}, stderr: ${stderr}`));
+        
+        console.log(`❌ ${errorMessage}`);
+        reject(new Error(errorMessage));
+        return;
+      }
+      
+      if (!stdout.trim()) {
+        reject(new Error('Claude Code returned empty response'));
+        return;
+      }
+      
+      try {
+        // Limpiar contenido
+        let cleanContent = cleanOutput(stdout);
+        
+        // Escribir archivo
+        const filePath = path.join(workingDir, targetFile);
+        const fileDir = path.dirname(filePath);
+        
+        await fs.mkdir(fileDir, { recursive: true });
+        await fs.writeFile(filePath, cleanContent, 'utf8');
+        
+        console.log(`✅ Archivo creado: ${targetFile}`);
+        console.log(`📂 Ruta: ${filePath}`);
+        
+        // ABRIR EN CURSOR
+        console.log('🚀 === ABRIENDO EN CURSOR ===');
+        const opened = await openInCursor(filePath);
+        console.log(`🎯 Cursor abierto: ${opened ? 'SÍ' : 'NO'}`);
+        
+        resolve({
+          success: true,
+          file: targetFile,
+          path: filePath,
+          cursorOpened: opened,
+          contentPreview: cleanContent.substring(0, 200) + '...'
+        });
+        
+      } catch (error) {
+        reject(new Error(`Error escribiendo archivo: ${error.message}`));
       }
     });
     
@@ -168,14 +188,30 @@ async function executeClaudeCodeGeneral(prompt, workingDir) {
     });
     
     process.on('close', (code) => {
-      if (code === 0) {
-        resolve({
-          success: true,
-          output: stdout
-        });
-      } else {
-        reject(new Error(`Claude Code exited with code ${code}`));
+      if (code !== 0) {
+        let errorMessage = `Claude Code failed with exit code ${code}`;
+        
+        if (stdout.includes('5-hour limit reached') || stdout.includes('limit reached')) {
+          errorMessage = 'Claude Code rate limit reached. Please try again later.';
+        } else if (stdout.includes('authentication') || stdout.includes('unauthorized')) {
+          errorMessage = 'Claude Code authentication error. Please check your credentials.';
+        } else if (stdout) {
+          errorMessage += ` Output: ${stdout.substring(0, 200)}`;
+        }
+        
+        reject(new Error(errorMessage));
+        return;
       }
+      
+      if (!stdout.trim()) {
+        reject(new Error('Claude Code returned empty response'));
+        return;
+      }
+      
+      resolve({
+        success: true,
+        output: stdout
+      });
     });
     
     process.on('error', (error) => {
@@ -209,6 +245,32 @@ async function openInCursor(filePath) {
       }
     });
   });
+}
+
+// Limpiar output de Claude Code
+function cleanOutput(output) {
+  console.log('🧹 Limpiando output de Claude...');
+  
+  // Remover mensajes de rate limiting y otros metadatos
+  let cleaned = output.replace(/5-hour limit reached.*?\n/g, '');
+  cleaned = cleaned.replace(/resets \d+pm.*?\n/g, '');
+  cleaned = cleaned.replace(/Claude Code.*?\n/g, '');
+  
+  // Buscar bloques de código entre ```
+  const codeBlockRegex = /```[\w]*\n([\s\S]*?)```/g;
+  const matches = [...cleaned.matchAll(codeBlockRegex)];
+  
+  if (matches.length > 0) {
+    console.log(`📦 Encontrados ${matches.length} bloques de código`);
+    // Usar el bloque más grande (probablemente el componente principal)
+    const largestBlock = matches.reduce((prev, current) => 
+      current[1].length > prev[1].length ? current : prev
+    );
+    return largestBlock[1].trim();
+  }
+  
+  // Si no hay bloques de código, devolver el contenido limpio
+  return cleaned.trim();
 }
 
 // Extraer código de la respuesta conversacional de Claude
@@ -306,6 +368,68 @@ app.post('/test-open-cursor', async (req, res) => {
   });
 });
 
+// Check Claude Code status endpoint
+app.get('/claude-status', async (req, res) => {
+  try {
+    const claudeAvailable = await checkClaudeCode();
+    
+    if (!claudeAvailable) {
+      return res.json({
+        available: false,
+        message: 'Claude Code CLI not found'
+      });
+    }
+    
+    // Test with a simple prompt to check rate limits
+    const testResult = await new Promise((resolve) => {
+      const process = spawn('claude', ['-p'], {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+      
+      let stdout = '';
+      let stderr = '';
+      
+      process.stdin.write('test');
+      process.stdin.end();
+      
+      process.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+      
+      process.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+      
+      process.on('close', (code) => {
+        resolve({
+          code,
+          stdout,
+          stderr,
+          rateLimited: stdout.includes('5-hour limit reached') || stdout.includes('limit reached')
+        });
+      });
+      
+      process.on('error', () => {
+        resolve({ code: -1, error: true });
+      });
+    });
+    
+    res.json({
+      available: true,
+      rateLimited: testResult.rateLimited,
+      message: testResult.rateLimited ? 'Rate limit reached' : 'Available',
+      details: testResult
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      available: false,
+      message: 'Error checking Claude Code status',
+      error: error.message
+    });
+  }
+});
+
 // Health endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -325,4 +449,6 @@ app.listen(port, () => {
   console.log('\nEndpoints:');
   console.log('  POST /send-to-claude-code');
   console.log('  POST /test-open-cursor');
+  console.log('  GET  /claude-status');
+  console.log('  GET  /health');
 });
