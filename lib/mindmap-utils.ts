@@ -152,36 +152,52 @@ function getBranchStatus(tasks: Task[]): 'ready' | 'blocked' | 'in_progress' | '
   return 'ready';
 }
 
-// Position cards using radial layout algorithm
+// Position cards using vertical tree layout algorithm
 export function positionCards(data: MindMapData, canvasSize: { width: number; height: number }): MindMapData {
   const { cards } = data;
   const centerX = canvasSize.width / 2;
-  const centerY = canvasSize.height / 2;
-
-  // Position root card at center
+  const rootY = 150; // Position root near the top
+  
+  // Position root card at top center
   const rootCard = cards[data.rootId];
-  rootCard.position = { x: centerX, y: centerY };
+  rootCard.position = { x: centerX, y: rootY };
 
-  // Position branch cards in a circle around root
+  // Position branch cards horizontally below root
   const branches = rootCard.children.map(id => cards[id]).filter(Boolean);
-  const branchRadius = Math.min(canvasSize.width, canvasSize.height) * 0.3;
+  const branchY = rootY + 300; // Distance below root
+  const branchSpacing = Math.min(400, (canvasSize.width - 200) / Math.max(branches.length, 1));
+  
+  // Calculate starting X position to center all branches
+  const totalBranchWidth = (branches.length - 1) * branchSpacing;
+  const startX = centerX - totalBranchWidth / 2;
 
   branches.forEach((branch, index) => {
-    const angle = (index * 2 * Math.PI) / branches.length - Math.PI / 2;
     branch.position = {
-      x: centerX + Math.cos(angle) * branchRadius,
-      y: centerY + Math.sin(angle) * branchRadius,
+      x: startX + (index * branchSpacing),
+      y: branchY,
     };
 
-    // Position task cards around their parent branch
+    // Position task cards vertically below each branch
     const taskCards = branch.children.map(id => cards[id]).filter(Boolean);
-    const taskRadius = 150;
+    const taskSpacing = 140; // Vertical spacing between tasks
+    const taskStartY = branchY + 200; // Distance below branch
+    
+    // For multiple tasks, arrange them in a grid pattern below the branch
+    const tasksPerRow = Math.max(1, Math.min(3, Math.ceil(Math.sqrt(taskCards.length))));
+    const taskRowSpacing = 180;
+    const taskColSpacing = 200;
     
     taskCards.forEach((task, taskIndex) => {
-      const taskAngle = (taskIndex * 2 * Math.PI) / Math.max(taskCards.length, 1);
+      const row = Math.floor(taskIndex / tasksPerRow);
+      const col = taskIndex % tasksPerRow;
+      
+      // Center tasks within each row
+      const rowWidth = (Math.min(taskCards.length - row * tasksPerRow, tasksPerRow) - 1) * taskColSpacing;
+      const rowStartX = branch.position.x - rowWidth / 2;
+      
       task.position = {
-        x: branch.position.x + Math.cos(taskAngle) * taskRadius,
-        y: branch.position.y + Math.sin(taskAngle) * taskRadius,
+        x: rowStartX + (col * taskColSpacing),
+        y: taskStartY + (row * taskRowSpacing),
       };
     });
   });

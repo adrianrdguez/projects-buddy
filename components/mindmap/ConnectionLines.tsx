@@ -14,15 +14,23 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
     const endY = to.position.y;
 
     if (type === 'hierarchy') {
-      // Smooth curved line for hierarchical connections
+      // Vertical tree connections: smooth curves for parent-child relationships
+      if (from.type === 'root' && to.type === 'branch') {
+        // Root to branch: vertical line with slight curve
+        const midY = startY + (endY - startY) * 0.6;
+        return `M ${startX} ${startY + 100} Q ${startX} ${midY} ${endX} ${endY - 60}`;
+      } else if (from.type === 'branch' && to.type === 'task') {
+        // Branch to task: curved line
+        const midY = startY + (endY - startY) * 0.5;
+        return `M ${startX} ${startY + 60} Q ${(startX + endX) / 2} ${midY} ${endX} ${endY - 50}`;
+      }
+      
+      // Default curved connection
       const midX = (startX + endX) / 2;
       const midY = (startY + endY) / 2;
-      const offsetX = Math.abs(endX - startX) * 0.3;
-      const offsetY = Math.abs(endY - startY) * 0.3;
-
-      return `M ${startX} ${startY} Q ${midX + offsetX} ${midY - offsetY} ${endX} ${endY}`;
+      return `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`;
     } else {
-      // Dashed line for dependencies
+      // Dependency connections: dashed lines
       return `M ${startX} ${startY} L ${endX} ${endY}`;
     }
   };
