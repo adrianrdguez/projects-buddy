@@ -22,41 +22,46 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
         {/* App Header - Always visible with consistent logo position */}
         <div className={`${isCollapsed ? 'flex justify-center pl-2' : 'pr-4'} ${isCollapsed ? 'pt-6 pb-2' : 'px-4 pt-6 pb-4'}`}>
           <div className="flex items-center gap-2 w-full">
-            <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg shadow-sm flex-shrink-0">
-              <MessageSquare className="w-4 h-4 text-primary-foreground" />
-            </div>
             {isCollapsed ? (
-              /* Collapsed state - show toggle button below logo */
-              <div className="absolute top-20 left-2">
-                <Button
-                  onClick={toggleSidebar}
-                  size="sm"
-                  variant="ghost"
-                  className="w-8 h-8 p-0 rounded-lg hover:bg-accent"
-                  title="Expandir sidebar"
-                >
-                  <PanelLeftOpen className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              /* Expanded state - show text and toggle button */
-              <div className={`overflow-hidden transition-all duration-300 w-full opacity-100 translate-x-0`}>
-                <div className="flex items-center justify-between w-full">
-                  <div className="whitespace-nowrap">
-                    <h1 className="text-xl font-bold text-foreground">Taskana</h1>
-                    <p className="text-xs text-muted-foreground">Project Organizer</p>
-                  </div>
-                  <Button
-                    onClick={toggleSidebar}
-                    size="sm"
-                    variant="ghost"
-                    className="ml-2 rounded-lg hover:bg-accent flex-shrink-0"
-                    title="Colapsar sidebar"
-                  >
-                    <PanelLeftClose className="w-4 h-4" />
-                  </Button>
+              /* Collapsed state - icon transforms to expand button on hover */
+              <div 
+                className="relative w-8 h-8 group cursor-pointer"
+                onClick={toggleSidebar}
+                title="Expandir sidebar"
+              >
+                {/* Default app icon */}
+                <div className="absolute inset-0 flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg shadow-sm transition-all duration-200 group-hover:opacity-0">
+                  <MessageSquare className="w-4 h-4 text-primary-foreground" />
+                </div>
+                {/* Expand button that replaces icon on hover */}
+                <div className="absolute inset-0 flex items-center justify-center w-8 h-8 bg-accent rounded-lg shadow-sm transition-all duration-200 opacity-0 group-hover:opacity-100 hover:bg-accent/80">
+                  <PanelLeftOpen className="w-4 h-4 text-foreground" />
                 </div>
               </div>
+            ) : (
+              /* Expanded state - show logo, text and collapse button */
+              <>
+                <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg shadow-sm flex-shrink-0">
+                  <MessageSquare className="w-4 h-4 text-primary-foreground" />
+                </div>
+                <div className={`overflow-hidden transition-all duration-300 w-full opacity-100 translate-x-0`}>
+                  <div className="flex items-center justify-between w-full">
+                    <div className="whitespace-nowrap">
+                      <h1 className="text-xl font-bold text-foreground">Taskana</h1>
+                      <p className="text-xs text-muted-foreground">Project Organizer</p>
+                    </div>
+                    <Button
+                      onClick={toggleSidebar}
+                      size="sm"
+                      variant="ghost"
+                      className="ml-2 rounded-lg hover:bg-accent flex-shrink-0"
+                      title="Colapsar sidebar"
+                    >
+                      <PanelLeftClose className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
