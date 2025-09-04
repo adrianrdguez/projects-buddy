@@ -73,7 +73,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
   const isDisabled = isLoading || !hasText;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="fixed bottom-0 left-0 right-0">
       <div className={`${sidebarCollapsed ? 'pl-12' : 'pl-64'} pr-6 py-4 transition-all duration-300`}>
         <div className="max-w-3xl mx-auto">
           <form onSubmit={handleSubmit} className="relative">
