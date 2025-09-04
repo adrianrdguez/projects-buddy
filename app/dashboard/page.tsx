@@ -264,6 +264,35 @@ export default function Dashboard() {
     }
   };
 
+  const handleProjectNameChange = async (newName: string) => {
+    if (!activeProjectId) return;
+
+    try {
+      const response = await makeAuthenticatedRequest(`/api/projects/${activeProjectId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: newName
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update project name in local state
+        setProjects(prev => prev.map(project => 
+          project.id === activeProjectId 
+            ? { ...project, name: newName }
+            : project
+        ));
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to update project name');
+      }
+    } catch (err) {
+      setError('Network error: Could not update project name');
+    }
+  };
+
   // Show loading only on initial load, not when switching tabs
   if (loading || (isLoadingProjects && !hasLoadedProjects)) {
     return (
@@ -312,6 +341,7 @@ export default function Dashboard() {
           tasks={projectTasks}
           onTaskClick={handleTaskClick}
           onTaskExecute={handleTaskExecute}
+          onProjectNameChange={handleProjectNameChange}
           isLoading={isLoadingTasks}
         />
 

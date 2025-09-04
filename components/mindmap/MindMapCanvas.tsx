@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Task } from "@/lib/types";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { LoadingText } from "@/components/ui/LoadingText";
+import { Button } from "@/components/ui/button";
+import { Edit2, Check, X } from "lucide-react";
 import { MindMapData, MindMapCard } from "@/lib/mindmap-types";
 import { 
   tasksToMindMapData, 
@@ -21,6 +23,7 @@ interface MindMapCanvasProps {
   tasks: Task[];
   onTaskClick?: (task: Task) => void;
   onTaskExecute?: (task: Task) => void;
+  onProjectNameChange?: (newName: string) => void;
   isLoading?: boolean;
 }
 
@@ -29,16 +32,58 @@ export function MindMapCanvas({
   tasks, 
   onTaskClick, 
   onTaskExecute, 
+  onProjectNameChange,
   isLoading = false 
 }: MindMapCanvasProps) {
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 1400, height: 1200 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState(projectName);
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   
   const { zoomState, zoomIn, zoomOut, resetZoom, pan, getTransform } = useZoom(0.8);
+
+  // Update edit value when project name changes
+  useEffect(() => {
+    setEditNameValue(projectName);
+  }, [projectName]);
+
+  const handleStartEdit = () => {
+    setIsEditingName(true);
+    setEditNameValue(projectName);
+    // Focus input after state update
+    setTimeout(() => {
+      if (nameInputRef.current) {
+        nameInputRef.current.focus();
+        nameInputRef.current.select();
+      }
+    }, 0);
+  };
+
+  const handleSaveName = () => {
+    const newName = editNameValue.trim();
+    if (newName && newName !== projectName && onProjectNameChange) {
+      onProjectNameChange(newName);
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingName(false);
+    setEditNameValue(projectName);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveName();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
 
   // Update canvas size based on container
   useEffect(() => {
@@ -193,9 +238,56 @@ export function MindMapCanvas({
         {/* Header */}
         <div className="p-6 pb-4 sticky top-0 z-10 bg-background">
           <div className="text-center">
-            <h2 className="text-2xl font-medium text-foreground mb-2">
-              {projectName}
-            </h2>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {isEditingName ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    value={editNameValue}
+                    onChange={(e) => setEditNameValue(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    className="text-2xl font-medium text-foreground bg-transparent border-b-2 border-primary outline-none text-center px-2 py-1"
+                    maxLength={100}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleSaveName}
+                    className="w-8 h-8 p-0 rounded-full hover:bg-accent text-green-600"
+                    title="Guardar nombre"
+                  >
+                    <Check className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCancelEdit}
+                    className="w-8 h-8 p-0 rounded-full hover:bg-accent text-red-600"
+                    title="Cancelar"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group">
+                  <h2 className="text-2xl font-medium text-foreground">
+                    {projectName}
+                  </h2>
+                  {onProjectNameChange && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleStartEdit}
+                      className="w-8 h-8 p-0 rounded-full hover:bg-accent opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      title="Editar nombre del proyecto"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
             <p className="text-muted-foreground text-sm">
               {isLoading ? "Generando tareas con IA..." : "Mapa mental del proyecto"}
             </p>
