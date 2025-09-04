@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { KanbanCanvas } from "@/components/KanbanCanvas";
+import { MindMapCanvas } from "@/components/mindmap/MindMapCanvas";
 import { InputBar } from "@/components/InputBar";
 import { Project, Task, GenerateTasksResponse, ProjectsResponse, ExecuteTaskResponse } from "@/lib/types";
 
@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Load projects on component mount
   useEffect(() => {
@@ -143,6 +144,10 @@ export default function Dashboard() {
     setError(null);
   };
 
+  const handleSidebarToggle = (isCollapsed: boolean) => {
+    setSidebarCollapsed(isCollapsed);
+  };
+
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task);
   };
@@ -241,9 +246,10 @@ export default function Dashboard() {
         activeProjectId={activeProjectId || undefined}
         onProjectSelect={handleProjectSelect}
         onNewProject={createNewProject}
+        onToggle={handleSidebarToggle}
       />
       
-      <div className="flex flex-col flex-1">
+      <div className={`flex flex-col flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-12' : 'ml-0'}`}>
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 m-4">
             <div className="flex items-center">
@@ -259,7 +265,7 @@ export default function Dashboard() {
           </div>
         )}
         
-        <KanbanCanvas
+        <MindMapCanvas
           projectName={activeProject?.name || "Selecciona un proyecto"}
           tasks={projectTasks}
           onTaskClick={handleTaskClick}
@@ -273,6 +279,7 @@ export default function Dashboard() {
         onSubmit={generateTasks} 
         isLoading={isLoadingTasks}
         placeholder={activeProject ? "Describe las tareas para tu proyecto..." : "Selecciona un proyecto primero"}
+        sidebarCollapsed={sidebarCollapsed}
       />
     </div>
   );

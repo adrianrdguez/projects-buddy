@@ -30,11 +30,13 @@ export interface SidebarProps {
   activeProjectId?: string;
   onProjectSelect: (projectId: string) => void;
   onNewProject: () => void;
+  onToggle?: (isCollapsed: boolean) => void;
 }
 
 export interface InputBarProps {
   onSubmit: (message: string) => void;
   placeholder?: string;
+  sidebarCollapsed?: boolean;
 }
 
 // API Request/Response Interfaces

@@ -9,7 +9,7 @@ interface ExtendedInputBarProps extends InputBarProps {
   isLoading?: boolean;
 }
 
-export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...", isLoading = false }: ExtendedInputBarProps) {
+export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...", isLoading = false, sidebarCollapsed = false }: ExtendedInputBarProps) {
   const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,7 +32,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
 
   return (
     <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="pl-64 pr-6 py-4">
+      <div className={`${sidebarCollapsed ? 'pl-12' : 'pl-64'} pr-6 py-4 transition-all duration-300`}>
         <div className="max-w-3xl mx-auto">
           <form onSubmit={handleSubmit} className="relative">
             <div className={`flex items-center bg-card border border-border rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3 ${
