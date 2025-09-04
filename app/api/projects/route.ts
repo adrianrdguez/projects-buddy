@@ -1,18 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CreateProjectRequest, ProjectsResponse, Project, ApiError } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest): Promise<NextResponse<ProjectsResponse | ApiError>> {
   try {
+    // Get the authenticated user
+    const { user, error: authError } = await getAuthenticatedUser(request);
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized'
+        },
+        { status: 401 }
+      );
+    }
+
     // Get query parameters for filtering/pagination
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit');
     const search = searchParams.get('search');
 
-    // Build query
+    // Build query - filter by authenticated user
     let query = supabase
       .from('projects')
       .select('*')
+      .eq('user_id', user.id)
       .order('updated_at', { ascending: false });
 
     // Apply search filter
@@ -78,6 +93,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProjectsRe
 
 export async function POST(request: NextRequest): Promise<NextResponse<ProjectsResponse | ApiError>> {
   try {
+    // Get the authenticated user
+    const { user, error: authError } = await getAuthenticatedUser(request);
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized'
+        },
+        { status: 401 }
+      );
+    }
+
     const body: CreateProjectRequest = await request.json();
     
     // Validate request body
@@ -110,10 +138,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProjectsR
         { status: 400 }
       );
     }
-
-    // For now, we'll use a temporary user_id since we don't have auth yet
-    // TODO: Replace with actual authenticated user ID
-    const tempUserId = 'temp-user-123';
 
     // Check if project with same name already exists for this user
     // Skip validation for now to avoid database issues - we'll add it back later
@@ -149,7 +173,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProjectsR
       .from('projects')
       .insert([
         {
-          user_id: tempUserId,
+          user_id: user.id,
           name: body.name.trim(),
           description: body.description?.trim() || null,
           tech_stack: body.tech_stack || [],

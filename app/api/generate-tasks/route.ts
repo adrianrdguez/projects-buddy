@@ -5,6 +5,19 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest): Promise<NextResponse<GenerateTasksResponse | ApiError>> {
   try {
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized'
+        },
+        { status: 401 }
+      );
+    }
+
     const body: GenerateTasksRequest = await request.json();
     
     // Validate request body
@@ -25,6 +38,24 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateT
           error: 'Input must be at least 3 characters long'
         },
         { status: 400 }
+      );
+    }
+
+    // Verify that the project belongs to the authenticated user
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', body.projectId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (projectError || !project) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Project not found or access denied'
+        },
+        { status: 404 }
       );
     }
 

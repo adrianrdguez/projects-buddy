@@ -13,6 +13,19 @@ export async function GET(
   { params }: { params: { id: string } }
 ): Promise<NextResponse<TasksResponse | ApiError>> {
   try {
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized'
+        },
+        { status: 401 }
+      );
+    }
+
     const projectId = params.id;
 
     if (!projectId) {
@@ -22,6 +35,24 @@ export async function GET(
           error: 'Project ID is required'
         },
         { status: 400 }
+      );
+    }
+
+    // First verify that the project belongs to the authenticated user
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (projectError || !project) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Project not found or access denied'
+        },
+        { status: 404 }
       );
     }
 
