@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
-import { supabase } from './supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function getAuthenticatedUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -11,14 +14,25 @@ export async function getAuthenticatedUser(request: NextRequest) {
   const token = authHeader.replace('Bearer ', '');
   
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    // Create a server-side client with the user's token
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+
+    const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
+      console.error('Auth error:', error);
       return { user: null, error: 'Invalid token' };
     }
     
-    return { user, error: null };
+    return { user, error: null, supabase };
   } catch (error) {
+    console.error('Authentication failed:', error);
     return { user: null, error: 'Authentication failed' };
   }
 }

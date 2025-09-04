@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Task, ApiError } from '@/lib/types';
-import { supabase } from '@/lib/supabase';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 interface TasksResponse {
   success: boolean;
@@ -10,13 +10,14 @@ interface TasksResponse {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<TasksResponse | ApiError>> {
   try {
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get the authenticated user and supabase client
+    const authResult = await getAuthenticatedUser(request);
+    const { user, error: authError, supabase: userSupabase } = authResult;
     
-    if (authError || !user) {
+    if (authError || !user || !userSupabase) {
       return NextResponse.json(
         {
           success: false,
@@ -26,7 +27,9 @@ export async function GET(
       );
     }
 
-    const projectId = params.id;
+    // Await params before using its properties (Next.js 15 requirement)
+    const resolvedParams = await params;
+    const projectId = resolvedParams.id;
 
     if (!projectId) {
       return NextResponse.json(
@@ -39,7 +42,7 @@ export async function GET(
     }
 
     // First verify that the project belongs to the authenticated user
-    const { data: project, error: projectError } = await supabase
+    const { data: project, error: projectError } = await userSupabase
       .from('projects')
       .select('id')
       .eq('id', projectId)
@@ -56,8 +59,8 @@ export async function GET(
       );
     }
 
-    // Fetch tasks from Supabase
-    const { data, error } = await supabase
+    // Fetch tasks from Supabase using the authenticated client
+    const { data, error } = await userSupabase
       .from('tasks')
       .select('*')
       .eq('project_id', projectId)

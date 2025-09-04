@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CreateProjectRequest, ProjectsResponse, Project, ApiError } from '@/lib/types';
-import { supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest): Promise<NextResponse<ProjectsResponse | ApiError>> {
   try {
-    // Get the authenticated user
-    const { user, error: authError } = await getAuthenticatedUser(request);
+    // Get the authenticated user and supabase client
+    const authResult = await getAuthenticatedUser(request);
+    const { user, error: authError, supabase: userSupabase } = authResult;
     
-    if (authError || !user) {
+    if (authError || !user || !userSupabase) {
       return NextResponse.json(
         {
           success: false,
@@ -23,8 +23,8 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProjectsRe
     const limit = searchParams.get('limit');
     const search = searchParams.get('search');
 
-    // Build query - filter by authenticated user
-    let query = supabase
+    // Build query - filter by authenticated user using the authenticated client
+    let query = userSupabase
       .from('projects')
       .select('*')
       .eq('user_id', user.id)
@@ -93,10 +93,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProjectsRe
 
 export async function POST(request: NextRequest): Promise<NextResponse<ProjectsResponse | ApiError>> {
   try {
-    // Get the authenticated user
-    const { user, error: authError } = await getAuthenticatedUser(request);
+    // Get the authenticated user and supabase client
+    const authResult = await getAuthenticatedUser(request);
+    const { user, error: authError, supabase: userSupabase } = authResult;
     
-    if (authError || !user) {
+    if (authError || !user || !userSupabase) {
       return NextResponse.json(
         {
           success: false,
@@ -168,8 +169,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProjectsR
     //   );
     // }
 
-    // Create new project in Supabase
-    const { data, error } = await supabase
+    // Create new project in Supabase using the authenticated client
+    const { data, error } = await userSupabase
       .from('projects')
       .insert([
         {
