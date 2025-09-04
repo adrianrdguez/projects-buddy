@@ -19,6 +19,14 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
   return (
     <>
       <div className={`${isCollapsed ? 'w-12' : 'w-64'} h-screen bg-[#F8F5F0] flex flex-col border-r transition-all duration-300 overflow-hidden relative`}>
+        {/* Resize handle - only visible when collapsed */}
+        {isCollapsed && (
+          <div 
+            className="absolute top-0 -right-1 w-2 h-full cursor-col-resize hover:bg-primary/10 transition-colors duration-200 z-20"
+            onClick={toggleSidebar}
+            title="Hacer clic para expandir"
+          />
+        )}
         {/* App Header - Always visible with consistent logo position */}
         <div className={`${isCollapsed ? 'flex justify-center pl-2' : 'pr-4'} ${isCollapsed ? 'pt-6 pb-2' : 'px-4 pt-6 pb-4'}`}>
           <div className="flex items-center gap-2 w-full">
