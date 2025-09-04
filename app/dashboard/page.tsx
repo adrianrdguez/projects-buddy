@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+  const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -27,12 +28,12 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
-  // Load projects on component mount (only if authenticated)
+  // Load projects on component mount (only if authenticated and not already loaded)
   useEffect(() => {
-    if (user) {
+    if (user && !hasLoadedProjects) {
       loadProjects();
     }
-  }, [user]);
+  }, [user, hasLoadedProjects]);
 
   // Set active project when projects are loaded and load its tasks
   useEffect(() => {
@@ -58,6 +59,7 @@ export default function Dashboard() {
       
       if (data.success) {
         setProjects(data.projects);
+        setHasLoadedProjects(true);
         setError(null);
       } else {
         setError(data.error || 'Failed to load projects');
@@ -262,8 +264,8 @@ export default function Dashboard() {
     }
   };
 
-  // Show loading while checking auth or loading projects
-  if (loading || isLoadingProjects) {
+  // Show loading only on initial load, not when switching tabs
+  if (loading || (isLoadingProjects && !hasLoadedProjects)) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
         <div className="text-foreground text-center">
