@@ -25,12 +25,39 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
             <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg shadow-sm flex-shrink-0">
               <MessageSquare className="w-4 h-4 text-primary-foreground" />
             </div>
-            <div className={`overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0 opacity-0 translate-x-2' : 'w-full opacity-100 translate-x-0'}`}>
-              <div className="whitespace-nowrap">
-                <h1 className="text-xl font-bold text-foreground">Taskana</h1>
-                <p className="text-xs text-muted-foreground">Project Organizer</p>
+            {isCollapsed ? (
+              /* Collapsed state - show toggle button below logo */
+              <div className="absolute top-20 left-2">
+                <Button
+                  onClick={toggleSidebar}
+                  size="sm"
+                  variant="ghost"
+                  className="w-8 h-8 p-0 rounded-lg hover:bg-accent"
+                  title="Expandir sidebar"
+                >
+                  <PanelLeftOpen className="w-4 h-4" />
+                </Button>
               </div>
-            </div>
+            ) : (
+              /* Expanded state - show text and toggle button */
+              <div className={`overflow-hidden transition-all duration-300 w-full opacity-100 translate-x-0`}>
+                <div className="flex items-center justify-between w-full">
+                  <div className="whitespace-nowrap">
+                    <h1 className="text-xl font-bold text-foreground">Taskana</h1>
+                    <p className="text-xs text-muted-foreground">Project Organizer</p>
+                  </div>
+                  <Button
+                    onClick={toggleSidebar}
+                    size="sm"
+                    variant="ghost"
+                    className="ml-2 rounded-lg hover:bg-accent flex-shrink-0"
+                    title="Colapsar sidebar"
+                  >
+                    <PanelLeftClose className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -117,20 +144,6 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
           )}
         </div>
       </div>
-
-      {/* Toggle Button */}
-      <Button
-        onClick={toggleSidebar}
-        size="sm"
-        variant="outline"
-        className={`fixed top-4 ${isCollapsed ? 'left-14' : 'left-60'} z-50 transition-all duration-300 bg-card/95 backdrop-blur-sm border-border hover:bg-accent shadow-md rounded-lg`}
-      >
-        {isCollapsed ? (
-          <PanelLeftOpen className="w-4 h-4" />
-        ) : (
-          <PanelLeftClose className="w-4 h-4" />
-        )}
-      </Button>
     </>
   );
 }
