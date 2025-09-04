@@ -269,7 +269,7 @@ export function MindMapCanvas({
                   No hay tareas aún
                 </h3>
                 <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  Usa la barra de entrada de abajo para describir lo que quieres hacer y la IA generará tareas automáticamente organizadas en un mapa mental.
+                  Usa la barra de entrada de abajo para describir lo que quieres hacer. La IA generará tareas automáticamente organizadas en un mapa mental y nombrará el proyecto según tu descripción.
                 </p>
               </div>
             </div>

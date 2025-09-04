@@ -65,6 +65,7 @@ export interface GenerateTasksRequest {
 export interface GenerateTasksResponse {
   success: boolean;
   tasks: Task[];
+  projectName?: string;
   error?: string;
 }
 

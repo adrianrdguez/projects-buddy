@@ -124,6 +124,15 @@ export default function Dashboard() {
       const data: GenerateTasksResponse = await response.json();
       
       if (data.success) {
+        // Update project name if AI generated one
+        if (data.projectName && activeProjectId) {
+          setProjects(prev => prev.map(project => 
+            project.id === activeProjectId 
+              ? { ...project, name: data.projectName! }
+              : project
+          ));
+        }
+        
         // Reload tasks for the current project to show the generated tasks
         await loadTasksForProject(activeProjectId);
         setError(null);
@@ -138,17 +147,12 @@ export default function Dashboard() {
   };
 
   const createNewProject = async () => {
-    const projectName = prompt('Nombre del nuevo proyecto:');
-    if (!projectName) return;
-
-    const projectDescription = prompt('Descripción (opcional):');
-
     try {
       const response = await makeAuthenticatedRequest('/api/projects', {
         method: 'POST',
         body: JSON.stringify({
-          name: projectName,
-          description: projectDescription || ''
+          name: 'Proyecto Sin Título',
+          description: ''
         })
       });
 

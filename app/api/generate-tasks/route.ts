@@ -72,14 +72,24 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateT
     }
 
     // Generate tasks using OpenAI API
-    const generatedTasks = await generateTasksWithOpenAI(body.input, body.projectId);
+    const { tasks: generatedTasks, projectName } = await generateTasksWithOpenAI(body.input, body.projectId);
+
+    // Update project name if AI generated one
+    if (projectName) {
+      await userSupabase
+        .from('projects')
+        .update({ name: projectName })
+        .eq('id', body.projectId)
+        .eq('user_id', user.id);
+    }
 
     // Save tasks to Supabase using the authenticated client
     const savedTasks = await saveTasksToDatabase(generatedTasks, userSupabase);
 
     return NextResponse.json({
       success: true,
-      tasks: savedTasks
+      tasks: savedTasks,
+      projectName
     });
 
   } catch (error) {
@@ -94,7 +104,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateT
   }
 }
 
-async function generateTasksWithOpenAI(input: string, projectId: string): Promise<Task[]> {
+async function generateTasksWithOpenAI(input: string, projectId: string): Promise<{tasks: Task[], projectName?: string}> {
   try {
     const systemMessage = `You are an expert project manager and technical architect. Your job is to break down user requirements into detailed, actionable development tasks with proper dependencies and realistic time estimates.
 
@@ -105,21 +115,25 @@ Follow these guidelines:
 4. Provide realistic time estimates
 5. Assign appropriate priorities (high, medium, low)
 6. Think about phases: Planning → Setup → Core Development → Testing/Polish
+7. Generate a concise, creative project name based on the user's description
 
-Return ONLY a valid JSON array of tasks matching this exact structure:
-[
-  {
-    "title": "Task title",
-    "description": "Detailed description of what needs to be done",
-    "priority": "high|medium|low",
-    "dependencies": [0, 1], // Array of task indices this depends on (empty array if no dependencies)
-    "estimatedTime": "X hours" // Format: "X hours" or "X days"
-  }
-]`;
+Return ONLY a valid JSON object matching this exact structure:
+{
+  "projectName": "A creative, concise project name based on the user's description",
+  "tasks": [
+    {
+      "title": "Task title",
+      "description": "Detailed description of what needs to be done",
+      "priority": "high|medium|low",
+      "dependencies": [0, 1], // Array of task indices this depends on (empty array if no dependencies)
+      "estimatedTime": "X hours" // Format: "X hours" or "X days"
+    }
+  ]
+}`;
 
-    const userMessage = `Break down this project into development tasks: "${input}"
+    const userMessage = `Break down this project into development tasks and create a project name: "${input}"
 
-Consider the technical requirements, user experience, and implementation phases. Create tasks that would guide a developer from start to finish.`;
+Consider the technical requirements, user experience, and implementation phases. Create tasks that would guide a developer from start to finish. Also generate a creative, concise project name that reflects what the user wants to build.`;
 
 
     const completion = await openai.chat.completions.create({
@@ -129,7 +143,7 @@ Consider the technical requirements, user experience, and implementation phases.
         { role: "user", content: userMessage }
       ],
       temperature: 0.3,
-      max_tokens: 1200,
+      max_tokens: 1500,
     });
 
 
@@ -139,19 +153,24 @@ Consider the technical requirements, user experience, and implementation phases.
     }
 
     // Parse the JSON response
-    let parsedTasks: Array<{
-      title: string;
-      description: string;
-      priority: 'low' | 'medium' | 'high';
-      dependencies: number[];
-      estimatedTime: string;
-    }>;
+    let parsedResponse: {
+      projectName: string;
+      tasks: Array<{
+        title: string;
+        description: string;
+        priority: 'low' | 'medium' | 'high';
+        dependencies: number[];
+        estimatedTime: string;
+      }>;
+    };
 
     try {
-      parsedTasks = JSON.parse(response);
+      parsedResponse = JSON.parse(response);
     } catch (parseError) {
       throw new Error('Invalid JSON response from OpenAI');
     }
+
+    const { projectName, tasks: parsedTasks } = parsedResponse;
 
     // Validate and convert to Task format
     const currentTime = new Date();
@@ -183,13 +202,14 @@ Consider the technical requirements, user experience, and implementation phases.
       return convertedTask;
     });
 
-    return convertedTasks;
+    return { tasks: convertedTasks, projectName };
 
   } catch (error: unknown) {
     console.error('OpenAI API error:', error);
     
     // Fallback to template-based generation
-    return generateTasksFromTemplate(input, projectId);
+    const fallbackTasks = await generateTasksFromTemplate(input, projectId);
+    return { tasks: fallbackTasks };
   }
 }
 
