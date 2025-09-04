@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GenerateTasksRequest, GenerateTasksResponse, Task, ApiError } from '@/lib/types';
+import openai from '@/lib/openai';
 
 export async function POST(request: NextRequest): Promise<NextResponse<GenerateTasksResponse | ApiError>> {
   try {
@@ -26,8 +27,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateT
       );
     }
 
-    // Mock AI task generation (replace with actual OpenAI/Claude API call)
-    const generatedTasks = await generateTasksFromInput(body.input, body.projectId);
+    // Generate tasks using OpenAI API
+    const generatedTasks = await generateTasksWithOpenAI(body.input, body.projectId);
 
     return NextResponse.json({
       success: true,
@@ -46,14 +47,145 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateT
   }
 }
 
-async function generateTasksFromInput(input: string, projectId: string): Promise<Task[]> {
-  // Mock implementation - replace with actual AI API call
-  const currentTime = new Date();
+async function generateTasksWithOpenAI(input: string, projectId: string): Promise<Task[]> {
+  console.log('🚀 Starting OpenAI task generation for input:', input);
   
-  // Simple task generation based on common patterns
+  try {
+    const systemMessage = `You are an expert project manager and technical architect. Your job is to break down user requirements into detailed, actionable development tasks with proper dependencies and realistic time estimates.
+
+Follow these guidelines:
+1. Create 4-8 tasks that logically break down the project
+2. Each task should be specific and actionable
+3. Include proper dependency chains (use task indices like 0, 1, 2 for dependencies)
+4. Provide realistic time estimates
+5. Assign appropriate priorities (high, medium, low)
+6. Think about phases: Planning → Setup → Core Development → Testing/Polish
+
+Return ONLY a valid JSON array of tasks matching this exact structure:
+[
+  {
+    "title": "Task title",
+    "description": "Detailed description of what needs to be done",
+    "priority": "high|medium|low",
+    "dependencies": [0, 1], // Array of task indices this depends on (empty array if no dependencies)
+    "estimatedTime": "X hours" // Format: "X hours" or "X days"
+  }
+]`;
+
+    const userMessage = `Break down this project into development tasks: "${input}"
+
+Consider the technical requirements, user experience, and implementation phases. Create tasks that would guide a developer from start to finish.`;
+
+    console.log('📤 Sending request to OpenAI...');
+    console.log('System message length:', systemMessage.length);
+    console.log('User message:', userMessage);
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: systemMessage },
+        { role: "user", content: userMessage }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    });
+
+    console.log('📥 Received response from OpenAI');
+    console.log('Usage:', completion.usage);
+
+    const response = completion.choices[0]?.message?.content;
+    if (!response) {
+      console.error('❌ No response content from OpenAI');
+      throw new Error('No response from OpenAI');
+    }
+
+    console.log('📄 Raw OpenAI response:');
+    console.log('Response length:', response.length);
+    console.log('Response content:', response);
+
+    // Parse the JSON response
+    let parsedTasks: Array<{
+      title: string;
+      description: string;
+      priority: 'low' | 'medium' | 'high';
+      dependencies: number[];
+      estimatedTime: string;
+    }>;
+
+    try {
+      parsedTasks = JSON.parse(response);
+      console.log('✅ Successfully parsed JSON response');
+      console.log('Number of tasks parsed:', parsedTasks.length);
+      console.log('Parsed tasks:', parsedTasks);
+    } catch (parseError) {
+      console.error('❌ Failed to parse OpenAI response as JSON:', parseError);
+      console.error('Raw response:', response);
+      throw new Error('Invalid JSON response from OpenAI');
+    }
+
+    // Validate and convert to Task format
+    const currentTime = new Date();
+    const baseId = Date.now();
+    
+    console.log('🔄 Converting to Task format with base ID:', baseId);
+    
+    const convertedTasks = parsedTasks.map((task, index) => {
+      // Convert dependency indices to actual task IDs
+      const dependencies = task.dependencies.map(depIndex => `task-${baseId}-${depIndex}`);
+      
+      const convertedTask = {
+        id: `task-${baseId}-${index}`,
+        title: task.title,
+        description: task.description,
+        status: 'ready' as const,
+        priority: task.priority,
+        dependencies,
+        estimatedTime: task.estimatedTime,
+        projectId,
+        createdAt: currentTime,
+        updatedAt: currentTime
+      };
+
+      console.log(`Task ${index}:`, {
+        id: convertedTask.id,
+        title: convertedTask.title,
+        priority: convertedTask.priority,
+        dependencies: convertedTask.dependencies,
+        estimatedTime: convertedTask.estimatedTime
+      });
+
+      return convertedTask;
+    });
+
+    console.log('✅ Successfully generated', convertedTasks.length, 'tasks with OpenAI');
+    return convertedTasks;
+
+  } catch (error: unknown) {
+    console.error('❌ OpenAI API error:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    
+    // Fallback to template-based generation
+    console.log('🔄 Falling back to template-based task generation');
+    return generateTasksFromTemplate(input, projectId);
+  }
+}
+
+// Fallback function using the original template system
+async function generateTasksFromTemplate(input: string, projectId: string): Promise<Task[]> {
+  console.log('🔧 Using fallback template system for input:', input);
+  
+  const currentTime = new Date();
   const taskTemplates = getTaskTemplatesForInput(input);
   
-  return taskTemplates.map((template, index) => ({
+  console.log('📋 Template system generated', taskTemplates.length, 'task templates');
+  
+  const tasks = taskTemplates.map((template, index) => ({
     id: `task-${Date.now()}-${index}`,
     title: template.title,
     description: template.description,
@@ -65,6 +197,18 @@ async function generateTasksFromInput(input: string, projectId: string): Promise
     createdAt: currentTime,
     updatedAt: currentTime
   }));
+
+  console.log('🏁 Fallback system completed with', tasks.length, 'tasks');
+  tasks.forEach((task, index) => {
+    console.log(`Fallback Task ${index}:`, {
+      id: task.id,
+      title: task.title,
+      priority: task.priority,
+      estimatedTime: task.estimatedTime
+    });
+  });
+
+  return tasks;
 }
 
 function getTaskTemplatesForInput(input: string): Array<{
