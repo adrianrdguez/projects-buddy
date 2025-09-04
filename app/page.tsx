@@ -20,12 +20,21 @@ export default function Dashboard() {
     loadProjects();
   }, []);
 
-  // Set active project when projects are loaded
+  // Set active project when projects are loaded and load its tasks
   useEffect(() => {
     if (projects.length > 0 && !activeProjectId) {
       setActiveProjectId(projects[0].id);
     }
   }, [projects, activeProjectId]);
+
+  // Load tasks when active project changes
+  useEffect(() => {
+    if (activeProjectId) {
+      loadTasksForProject(activeProjectId);
+    } else {
+      setTasks([]);
+    }
+  }, [activeProjectId]);
 
   const loadProjects = async () => {
     try {
@@ -43,6 +52,22 @@ export default function Dashboard() {
       setError('Network error: Could not load projects');
     } finally {
       setIsLoadingProjects(false);
+    }
+  };
+
+  const loadTasksForProject = async (projectId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/tasks`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setTasks(data.tasks);
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to load tasks');
+      }
+    } catch (err) {
+      setError('Network error: Could not load tasks');
     }
   };
 
@@ -64,9 +89,10 @@ export default function Dashboard() {
         description: input,
         status: 'ready',
         priority: 'medium',
-        projectId: activeProjectId,
+        project_id: activeProjectId,
         dependencies: [],
         estimatedTime: '1 hora',
+        ai_prompt: input,
         createdAt: now,
         updatedAt: now,
       };
@@ -87,8 +113,8 @@ export default function Dashboard() {
       const data: GenerateTasksResponse = await response.json();
       
       if (data.success) {
-        // Keep ONLY the optimistic user input card visible
-        setTasks([optimisticTask]);
+        // Reload tasks for the current project to show the generated tasks
+        await loadTasksForProject(activeProjectId);
         setError(null);
       } else {
         setError(data.error || 'Failed to generate tasks');
@@ -135,12 +161,11 @@ export default function Dashboard() {
   };
 
   const activeProject = projects.find(p => p.id === activeProjectId);
-  const projectTasks = tasks.filter(t => t.projectId === activeProjectId);
+  const projectTasks = tasks; // Tasks are already filtered by project in loadTasksForProject
 
   const handleProjectSelect = (projectId: string) => {
     setActiveProjectId(projectId);
-    // Clear tasks when switching projects (in a real app, you'd load tasks for the selected project)
-    setTasks([]);
+    // Tasks will be loaded automatically via useEffect
     setError(null);
   };
 

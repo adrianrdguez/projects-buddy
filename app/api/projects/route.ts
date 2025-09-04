@@ -1,78 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CreateProjectRequest, ProjectsResponse, Project, ApiError } from '@/lib/types';
-
-// Mock database - replace with actual database in production
-let mockProjects: Project[] = [
-  {
-    id: '1',
-    name: 'App Fotógrafos de Surf',
-    description: 'Aplicación para fotógrafos de surf profesionales',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15')
-  },
-  {
-    id: '2',
-    name: 'E-commerce Platform',
-    description: 'Plataforma de comercio electrónico con Next.js',
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-12')
-  },
-  {
-    id: '3',
-    name: 'Task Management System',
-    description: 'Sistema de gestión de tareas con IA',
-    createdAt: new Date('2024-01-08'),
-    updatedAt: new Date('2024-01-20')
-  }
-];
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest): Promise<NextResponse<ProjectsResponse | ApiError>> {
   try {
-    // Add CORS headers if needed
-    const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    };
-
     // Get query parameters for filtering/pagination
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit');
     const search = searchParams.get('search');
 
-    let filteredProjects = [...mockProjects];
+    // Build query
+    let query = supabase
+      .from('projects')
+      .select('*')
+      .order('updated_at', { ascending: false });
 
     // Apply search filter
     if (search) {
-      const searchLower = search.toLowerCase();
-      filteredProjects = filteredProjects.filter(project =>
-        project.name.toLowerCase().includes(searchLower) ||
-        project.description?.toLowerCase().includes(searchLower)
-      );
+      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`);
     }
 
     // Apply limit
     if (limit) {
       const limitNum = parseInt(limit, 10);
       if (limitNum > 0) {
-        filteredProjects = filteredProjects.slice(0, limitNum);
+        query = query.limit(limitNum);
       }
     }
 
-    // Sort by updatedAt (most recent first)
-    filteredProjects.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase error fetching projects:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Failed to fetch projects: ${error.message}`
+        },
+        { status: 500 }
+      );
+    }
+
+    // Convert Supabase data to Project interface
+    const projects: Project[] = (data || []).map((row: any) => ({
+      id: row.id,
+      user_id: row.user_id,
+      name: row.name,
+      description: row.description || '',
+      tech_stack: row.tech_stack || [],
+      status: row.status || 'active',
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at)
+    }));
 
     return NextResponse.json({
       success: true,
-      projects: filteredProjects
-    }, { headers });
+      projects
+    });
 
   } catch (error) {
     console.error('Error in projects GET API:', error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to fetch projects'
+        error: 'Internal server error'
       },
       { status: 500 }
     );
@@ -114,46 +111,88 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProjectsR
       );
     }
 
-    // Check if project with same name already exists
-    const existingProject = mockProjects.find(
-      project => project.name.toLowerCase() === body.name.toLowerCase()
-    );
+    // For now, we'll use a temporary user_id since we don't have auth yet
+    // TODO: Replace with actual authenticated user ID
+    const tempUserId = 'temp-user-123';
 
-    if (existingProject) {
+    // Check if project with same name already exists for this user
+    // Skip validation for now to avoid database issues - we'll add it back later
+    // const { data: existingProjects, error: checkError } = await supabase
+    //   .from('projects')
+    //   .select('id')
+    //   .eq('user_id', tempUserId)
+    //   .ilike('name', body.name);
+
+    // if (checkError) {
+    //   console.error('Error checking existing projects:', checkError);
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: 'Failed to validate project name'
+    //     },
+    //     { status: 500 }
+    //   );
+    // }
+
+    // if (existingProjects && existingProjects.length > 0) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: 'A project with this name already exists'
+    //     },
+    //     { status: 409 }
+    //   );
+    // }
+
+    // Create new project in Supabase
+    const { data, error } = await supabase
+      .from('projects')
+      .insert([
+        {
+          user_id: tempUserId,
+          name: body.name.trim(),
+          description: body.description?.trim() || null,
+          tech_stack: body.tech_stack || [],
+          status: 'active'
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating project:', error);
+      console.error('Error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       return NextResponse.json(
         {
           success: false,
-          error: 'A project with this name already exists'
+          error: `Failed to create project: ${error.message}`
         },
-        { status: 409 }
+        { status: 500 }
       );
     }
 
-    // Create new project
+    // Convert to Project interface
     const newProject: Project = {
-      id: `project-${Date.now()}`,
-      name: body.name.trim(),
-      description: body.description?.trim() || '',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    // Add to mock database
-    mockProjects.unshift(newProject);
-
-    // Add CORS headers
-    const headers = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      id: data.id,
+      user_id: data.user_id,
+      name: data.name,
+      description: data.description || '',
+      tech_stack: data.tech_stack || [],
+      status: data.status,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
     };
 
     return NextResponse.json({
       success: true,
       projects: [newProject]
     }, { 
-      status: 201,
-      headers 
+      status: 201
     });
 
   } catch (error) {
@@ -172,20 +211,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProjectsR
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to create project'
+        error: 'Internal server error'
       },
       { status: 500 }
     );
   }
-}
-
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
 }

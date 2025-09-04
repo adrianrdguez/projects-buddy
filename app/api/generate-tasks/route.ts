@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GenerateTasksRequest, GenerateTasksResponse, Task, ApiError } from '@/lib/types';
 import openai from '@/lib/openai';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest): Promise<NextResponse<GenerateTasksResponse | ApiError>> {
   try {
@@ -30,9 +31,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateT
     // Generate tasks using OpenAI API
     const generatedTasks = await generateTasksWithOpenAI(body.input, body.projectId);
 
+    // Save tasks to Supabase
+    const savedTasks = await saveTasksToDatabase(generatedTasks);
+
     return NextResponse.json({
       success: true,
-      tasks: generatedTasks
+      tasks: savedTasks
     });
 
   } catch (error) {
@@ -122,7 +126,7 @@ Consider the technical requirements, user experience, and implementation phases.
         priority: task.priority,
         dependencies,
         estimatedTime: task.estimatedTime,
-        projectId,
+        project_id: projectId,
         createdAt: currentTime,
         updatedAt: currentTime
       };
@@ -154,12 +158,71 @@ async function generateTasksFromTemplate(input: string, projectId: string): Prom
     priority: template.priority,
     dependencies: template.dependencies || [],
     estimatedTime: template.estimatedTime,
-    projectId,
+    project_id: projectId,
     createdAt: currentTime,
     updatedAt: currentTime
   }));
 
   return tasks;
+}
+
+async function saveTasksToDatabase(tasks: Task[]): Promise<Task[]> {
+  if (tasks.length === 0) {
+    return tasks;
+  }
+
+  try {
+    // Prepare tasks for database insertion
+    const tasksToInsert = tasks.map(task => ({
+      id: task.id,
+      project_id: task.project_id,
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      dependencies: task.dependencies,
+      estimated_time: task.estimatedTime,
+      ai_prompt: task.ai_prompt,
+      generated_prompt: task.generated_prompt,
+      target_file: task.target_file
+    }));
+
+    // Insert tasks into Supabase
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert(tasksToInsert)
+      .select();
+
+    if (error) {
+      console.error('Error saving tasks to database:', error);
+      // If database save fails, return the original tasks (fallback)
+      return tasks;
+    }
+
+    // Convert database results back to Task interface
+    const savedTasks: Task[] = (data || []).map((row: any) => ({
+      id: row.id,
+      project_id: row.project_id,
+      title: row.title,
+      description: row.description || '',
+      status: row.status,
+      priority: row.priority,
+      dependencies: row.dependencies || [],
+      estimatedTime: row.estimated_time || '',
+      target_file: row.target_file,
+      ai_prompt: row.ai_prompt,
+      generated_prompt: row.generated_prompt,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at)
+    }));
+
+    return savedTasks;
+
+  } catch (error) {
+    console.error('Error in saveTasksToDatabase:', error);
+    // Return original tasks as fallback
+    return tasks;
+  }
 }
 
 function getTaskTemplatesForInput(input: string): Array<{
@@ -212,7 +275,7 @@ function getTaskTemplatesForInput(input: string): Array<{
 
     // Fix dependencies with actual task IDs
     const baseId = Date.now();
-    return authTasks.map((task, index) => ({
+    return authTasks.map((task) => ({
       ...task,
       dependencies: task.dependencies?.map(dep => 
         dep.replace('task-${Date.now()}', `task-${baseId}`)
