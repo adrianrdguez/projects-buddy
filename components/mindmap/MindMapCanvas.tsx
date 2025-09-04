@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2 } from "lucide-react";
 import { Task } from "@/lib/types";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { LoadingText } from "@/components/ui/LoadingText";
 import { MindMapData, MindMapCard } from "@/lib/mindmap-types";
 import { 
   tasksToMindMapData, 
@@ -214,8 +215,9 @@ export function MindMapCanvas({
         >
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full">
-              <Loader2 className="w-8 h-8 text-foreground animate-spin mb-4" />
-              <p className="text-muted-foreground text-sm">Procesando tu solicitud...</p>
+              <LoadingSpinner size="xl" className="text-primary mb-6" />
+              <LoadingText className="text-muted-foreground text-base mb-3" />
+              <p className="text-muted-foreground text-xs opacity-70">Esto puede tomar unos momentos</p>
             </div>
           ) : mindMapData ? (
             <div 

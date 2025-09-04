@@ -35,37 +35,18 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
         </div>
 
         {/* New Project Button */}
-        <div className={`${isCollapsed ? 'flex justify-center py-2' : 'px-4 pb-4 flex items-center gap-2'}`}>
-          {isCollapsed ? (
-            <Button
-              onClick={onNewProject}
-              size="sm"
-              className="w-8 h-8 p-0 bg-card border border-border hover:bg-accent text-foreground rounded-full shadow-sm flex items-center justify-center"
-              title="Nuevo proyecto"
-            >
-              <Plus className="w-4 h-4" />
-            </Button>
-          ) : (
-            <>
-              <Button
-                onClick={onNewProject}
-                className={`w-full justify-start gap-2 bg-card border border-border hover:bg-accent text-foreground text-sm py-2.5 rounded-full overflow-hidden transition-all duration-300 ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}
-              >
-                <Plus className="w-4 h-4 flex-shrink-0" />
-                <span className="whitespace-nowrap">Nuevo proyecto</span>
-              </Button>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={toggleTheme}
-                className={`ml-2 rounded-full transition-all duration-300 ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-            </>
-          )}
+        <div className={`${isCollapsed ? 'flex justify-center py-2' : 'px-4 pb-4'}`}>
+          <Button
+            onClick={onNewProject}
+            className={`${isCollapsed 
+              ? 'w-8 h-8 p-0 bg-card border border-border hover:bg-accent text-foreground rounded-full shadow-sm flex items-center justify-center'
+              : 'w-full justify-start gap-2 bg-card border border-border hover:bg-accent text-foreground text-sm py-2.5 rounded-full overflow-hidden transition-all duration-300 opacity-100 scale-100 translate-x-0'
+            }`}
+            title={isCollapsed ? "Nuevo proyecto" : undefined}
+          >
+            <Plus className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span className="whitespace-nowrap">Nuevo proyecto</span>}
+          </Button>
         </div>
         
         {/* Projects List - Only show when expanded */}
@@ -93,22 +74,45 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
         {isCollapsed && <div className="flex-1" />}
         
         {/* Settings Section */}
-        <div className={`border-t border-border/50 py-3 ${isCollapsed ? 'flex justify-center' : 'px-3'}`}>
+        <div className={`border-t border-border/50 py-3 ${isCollapsed ? 'flex flex-col items-center gap-2' : 'px-3'}`}>
           {isCollapsed ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={toggleTheme}
-              className="w-8 h-8 p-0 rounded-full hover:bg-accent flex items-center justify-center"
-              title="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={toggleTheme}
+                className="w-8 h-8 p-0 rounded-full hover:bg-accent flex items-center justify-center"
+                title="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="w-8 h-8 p-0 rounded-full hover:bg-accent flex items-center justify-center"
+                title="Configuración"
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </>
           ) : (
-            <div className={`flex items-center gap-3 px-3 py-2 text-foreground/70 hover:bg-accent rounded-lg cursor-pointer transition-all duration-300 overflow-hidden ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}>
-              <Settings className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm whitespace-nowrap">Configuración</span>
+            <div className="flex items-center justify-between">
+              <div className={`flex items-center gap-3 px-3 py-2 text-foreground/70 hover:bg-accent rounded-lg cursor-pointer transition-all duration-300 overflow-hidden ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}>
+                <Settings className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm whitespace-nowrap">Configuración</span>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={toggleTheme}
+                className={`rounded-full transition-all duration-300 ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
             </div>
           )}
         </div>

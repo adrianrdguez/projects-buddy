@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Mic, Loader2 } from "lucide-react";
+import { Send, Mic } from "lucide-react";
 import { InputBarProps } from "@/lib/types";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface ExtendedInputBarProps extends InputBarProps {
   isLoading?: boolean;
@@ -77,7 +78,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
       <div className={`${sidebarCollapsed ? 'pl-12' : 'pl-64'} pr-6 py-4 transition-all duration-300`}>
         <div className="max-w-3xl mx-auto">
           <form onSubmit={handleSubmit} className="relative">
-            <div className={`flex items-end bg-card border border-border rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3 ${
+            <div className={`flex items-center bg-card border border-border rounded-full shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3 ${
               isLoading ? 'opacity-75' : ''
             }`}>
               <textarea
@@ -88,16 +89,18 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
                 placeholder={isLoading ? "Generando tareas..." : placeholder}
                 disabled={isLoading}
                 rows={1}
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base disabled:cursor-not-allowed resize-none min-h-[24px] scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent"
+                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base disabled:cursor-not-allowed resize-none min-h-[24px] scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent flex items-center"
                 style={{ 
                   lineHeight: '24px',
                   wordWrap: 'break-word',
                   overflowWrap: 'break-word',
-                  whiteSpace: 'pre-wrap'
+                  whiteSpace: 'pre-wrap',
+                  paddingTop: '0px',
+                  paddingBottom: '0px'
                 }}
               />
               
-              <div className="flex items-center ml-2 pb-0">
+              <div className="flex items-center ml-2">
                 <Button
                   type="button"
                   size="icon"
@@ -114,7 +117,7 @@ export function InputBar({ onSubmit, placeholder = "Describe tu tarea aquí...",
                     className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-8 h-8 ml-2 transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <LoadingSpinner size="sm" />
                     ) : (
                       <Send className="w-4 h-4" />
                     )}
