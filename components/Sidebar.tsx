@@ -20,7 +20,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
     <>
       <div className={`${isCollapsed ? 'w-12' : 'w-64'} h-screen bg-[#F8F5F0] flex flex-col border-r transition-all duration-300 overflow-hidden relative`}>
         {/* App Header - Always visible with consistent logo position */}
-        <div className={`${isCollapsed ? 'flex justify-center' : 'px-4'} pt-6 pb-4`}>
+        <div className={`${isCollapsed ? 'flex justify-center pl-2' : 'pr-4'} ${isCollapsed ? 'pt-6 pb-2' : 'px-4 pt-6 pb-4'}`}>
           <div className="flex items-center gap-2 w-full">
             <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg shadow-sm flex-shrink-0">
               <MessageSquare className="w-4 h-4 text-primary-foreground" />
@@ -35,7 +35,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
         </div>
 
         {/* New Project Button */}
-        <div className={`${isCollapsed ? 'flex justify-center pb-3' : 'px-4 pb-4 flex items-center gap-2'}`}>
+        <div className={`${isCollapsed ? 'flex justify-center py-2' : 'px-4 pb-4 flex items-center gap-2'}`}>
           {isCollapsed ? (
             <Button
               onClick={onNewProject}
