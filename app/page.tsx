@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
-import { KanbanCanvas } from "@/components/KanbanCanvas";
+import { MindMapCanvas } from "@/components/mindmap/MindMapCanvas";
 import { InputBar } from "@/components/InputBar";
 import { Project, Task, GenerateTasksResponse, ProjectsResponse, ExecuteTaskResponse } from "@/lib/types";
 
@@ -259,7 +259,7 @@ export default function Dashboard() {
           </div>
         )}
         
-        <KanbanCanvas
+        <MindMapCanvas
           projectName={activeProject?.name || "Selecciona un proyecto"}
           tasks={projectTasks}
           onTaskClick={handleTaskClick}
