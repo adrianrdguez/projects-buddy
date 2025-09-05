@@ -293,6 +293,38 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      const response = await makeAuthenticatedRequest(`/api/projects/${projectId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove project from local state
+        setProjects(prev => prev.filter(project => project.id !== projectId));
+        
+        // If we deleted the active project, switch to another one or clear
+        if (activeProjectId === projectId) {
+          const remainingProjects = projects.filter(p => p.id !== projectId);
+          if (remainingProjects.length > 0) {
+            setActiveProjectId(remainingProjects[0].id);
+          } else {
+            setActiveProjectId(null);
+            setTasks([]);
+          }
+        }
+        
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to delete project');
+      }
+    } catch (err) {
+      setError('Network error: Could not delete project');
+    }
+  };
+
   // Show loading only on initial load, not when switching tabs
   if (loading || (isLoadingProjects && !hasLoadedProjects)) {
     return (
@@ -317,6 +349,7 @@ export default function Dashboard() {
         activeProjectId={activeProjectId || undefined}
         onProjectSelect={handleProjectSelect}
         onNewProject={createNewProject}
+        onDeleteProject={handleDeleteProject}
         onToggle={handleSidebarToggle}
       />
       

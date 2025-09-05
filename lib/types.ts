@@ -47,6 +47,7 @@ export interface SidebarProps {
   activeProjectId?: string;
   onProjectSelect: (projectId: string) => void;
   onNewProject: () => void;
+  onDeleteProject?: (projectId: string) => void;
   onToggle?: (isCollapsed: boolean) => void;
 }
 

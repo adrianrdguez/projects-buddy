@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, MessageSquare, Sun, Moon, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Plus, Settings, MessageSquare, Sun, Moon, PanelLeftClose, PanelLeftOpen, Trash2 } from "lucide-react";
 import { SidebarProps } from "@/lib/types";
 import { useTheme } from "@/components/ThemeProvider";
 
-export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProject, onToggle }: SidebarProps) {
+export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProject, onDeleteProject, onToggle }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -13,6 +13,18 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
     setIsCollapsed(newCollapsedState);
     if (onToggle) {
       onToggle(newCollapsedState);
+    }
+  };
+
+  const handleDeleteProject = (projectId: string, projectName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent project selection when clicking delete
+    
+    const confirmed = window.confirm(
+      `¿Estás seguro de que quieres eliminar el proyecto "${projectName}"?\n\nEsta acción no se puede deshacer.`
+    );
+    
+    if (confirmed && onDeleteProject) {
+      onDeleteProject(projectId);
     }
   };
 
@@ -93,19 +105,34 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
         <div className={`flex-1 px-3 pb-3 overflow-y-auto transition-all duration-300 ${isCollapsed ? 'opacity-0 translate-y-2 pointer-events-none' : 'opacity-100 translate-y-0 pointer-events-auto'}`}>
           <div className="space-y-1">
             {projects.map((project, index) => (
-              <button
+              <div
                 key={project.id}
-                onClick={() => onProjectSelect(project.id)}
-                className={`w-full text-left p-3 rounded-xl transition-all duration-300 flex items-center gap-3 text-sm border overflow-hidden ${
+                className={`w-full rounded-xl transition-all duration-300 flex items-center text-sm border group ${
                   activeProjectId === project.id
                     ? "bg-card text-foreground border-border shadow-sm"
                     : "text-foreground/70 hover:bg-accent hover:text-foreground border-transparent"
                 } ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}
                 style={{ transitionDelay: isCollapsed ? '0ms' : `${index * 20}ms` }}
               >
-                <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate whitespace-nowrap">{project.name}</span>
-              </button>
+                <button
+                  onClick={() => onProjectSelect(project.id)}
+                  className="flex-1 text-left p-3 flex items-center gap-3 min-w-0"
+                >
+                  <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate whitespace-nowrap flex-1 min-w-0">{project.name}</span>
+                </button>
+                <div className="flex-shrink-0 px-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => handleDeleteProject(project.id, project.name, e)}
+                    className="w-8 h-8 p-0 rounded-full hover:bg-red-100 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                    title={`Eliminar proyecto "${project.name}"`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         </div>

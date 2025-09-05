@@ -168,3 +168,106 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse<{ success: boolean; error?: string }>> {
+  try {
+    // Get the authenticated user and supabase client
+    const authResult = await getAuthenticatedUser(request);
+    const { user, error: authError, supabase: userSupabase } = authResult;
+    
+    if (authError || !user || !userSupabase) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized'
+        },
+        { status: 401 }
+      );
+    }
+
+    // Await params before using its properties (Next.js 15 requirement)
+    const resolvedParams = await params;
+    const projectId = resolvedParams.id;
+
+    if (!projectId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Project ID is required'
+        },
+        { status: 400 }
+      );
+    }
+
+    // First verify that the project belongs to the authenticated user
+    const { data: existingProject, error: projectError } = await userSupabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (projectError || !existingProject) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Project not found or access denied'
+        },
+        { status: 404 }
+      );
+    }
+
+    // First, delete all tasks associated with the project
+    const { error: tasksDeleteError } = await userSupabase
+      .from('tasks')
+      .delete()
+      .eq('project_id', projectId);
+
+    if (tasksDeleteError) {
+      console.error('Error deleting project tasks:', tasksDeleteError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Failed to delete project tasks: ${tasksDeleteError.message}`
+        },
+        { status: 500 }
+      );
+    }
+
+    // Then delete the project itself
+    const { error } = await userSupabase
+      .from('projects')
+      .delete()
+      .eq('id', projectId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Error deleting project:', error);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Failed to delete project: ${error.message}`
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Error in project DELETE API:', error);
+    
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Internal server error'
+      },
+      { status: 500 }
+    );
+  }
+}
