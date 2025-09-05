@@ -5,9 +5,10 @@ interface ConnectionLinesProps {
   connections: Connection[];
   canvasSize: { width: number; height: number };
   animatedConnections?: string[];
+  processingConnections?: string[];
 }
 
-export function ConnectionLines({ cards, connections, canvasSize, animatedConnections = [] }: ConnectionLinesProps) {
+export function ConnectionLines({ cards, connections, canvasSize, animatedConnections = [], processingConnections = [] }: ConnectionLinesProps) {
   const getConnectionPath = (from: MindMapCard, to: MindMapCard, type: 'dependency' | 'hierarchy') => {
     const startX = from.position.x;
     const startY = from.position.y;
@@ -54,14 +55,31 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
     }
   };
 
-  const getConnectionStyle = (type: 'dependency' | 'hierarchy', isAnimated: boolean = false) => {
+  const getConnectionStyle = (type: 'dependency' | 'hierarchy', isAnimated: boolean = false, isProcessing: boolean = false) => {
     if (type === 'hierarchy') {
-      return {
-        stroke: isAnimated ? '#3b82f6' : 'hsl(var(--primary))',
-        strokeWidth: isAnimated ? 3 : 2,
-        fill: 'none',
-        opacity: isAnimated ? 0.8 : 0.6,
-      };
+      if (isProcessing) {
+        return {
+          stroke: '#10b981',
+          strokeWidth: 3,
+          fill: 'none',
+          opacity: 1,
+          filter: 'drop-shadow(0 0 6px #10b981)',
+        };
+      } else if (isAnimated) {
+        return {
+          stroke: '#3b82f6',
+          strokeWidth: 3,
+          fill: 'none',
+          opacity: 0.8,
+        };
+      } else {
+        return {
+          stroke: 'hsl(var(--primary))',
+          strokeWidth: 2,
+          fill: 'none',
+          opacity: 0.6,
+        };
+      }
     } else {
       return {
         stroke: 'hsl(var(--muted-foreground))',
@@ -90,18 +108,19 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
           const toCard = cards[connection.to];
           const connectionId = `${connection.from}->${connection.to}`;
           const isAnimated = animatedConnections.includes(connectionId);
+          const isProcessing = processingConnections.includes(connectionId);
           const pathId = `path-${connection.from}-${connection.to}-${index}`;
           const pathData = getConnectionPath(fromCard, toCard, connection.type);
           
           
           return (
-            <g key={`${connection.from}-${connection.to}-${index}`}>
+            <g key={`${connection.from}-${connection.to}-${index}-${isAnimated ? 'animated' : 'static'}-${isProcessing ? 'processing' : 'normal'}`}>
               {/* Connection line */}
               <path
                 id={pathId}
                 d={pathData}
-                style={getConnectionStyle(connection.type, isAnimated)}
-                className="transition-all duration-500"
+                style={getConnectionStyle(connection.type, isAnimated, isProcessing)}
+                className={`transition-all duration-500 ${isProcessing ? 'animate-pulse' : ''}`}
               />
               
 
@@ -114,17 +133,21 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
                   style={{ filter: 'drop-shadow(0 0 8px #10b981)' }}
                 >
                   <animateMotion
-                    dur="3s"
+                    dur="2s"
                     repeatCount="indefinite"
                     rotate="auto"
                     path={pathData}
                     begin="0s"
+                    calcMode="spline"
+                    keySplines="0.4 0 0.6 1"
                   />
                   <animate
                     attributeName="r"
                     values="6;12;6"
-                    dur="1s"
+                    dur="2s"
                     repeatCount="indefinite"
+                    calcMode="spline"
+                    keySplines="0.4 0 0.6 1;0.4 0 0.6 1"
                   />
                 </circle>
               )}
@@ -137,11 +160,13 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
                   opacity="0.7"
                 >
                   <animateMotion
-                    dur="3s"
+                    dur="2s"
                     repeatCount="indefinite"
                     rotate="auto"
-                    begin="0.5s"
+                    begin="0.4s"
                     path={pathData}
+                    calcMode="spline"
+                    keySplines="0.4 0 0.6 1"
                   />
                 </circle>
               )}

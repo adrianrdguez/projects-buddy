@@ -9,9 +9,10 @@ interface MindMapTaskCardProps {
   card: MindMapCard;
   onClick?: (card: MindMapCard) => void;
   onExecute?: (card: MindMapCard) => void;
+  isProcessing?: boolean;
 }
 
-export function MindMapTaskCard({ card, onClick, onExecute }: MindMapTaskCardProps) {
+export function MindMapTaskCard({ card, onClick, onExecute, isProcessing = false }: MindMapTaskCardProps) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<string | null>(null);
   const [executionError, setExecutionError] = useState<string | null>(null);
@@ -128,13 +129,17 @@ export function MindMapTaskCard({ card, onClick, onExecute }: MindMapTaskCardPro
 
   return (
     <Card 
-      className={`${getStatusColor(card.status)} rounded-lg shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 hover:border-primary/40 overflow-hidden`}
+      className={`${getStatusColor(card.status)} rounded-lg shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 hover:border-primary/40 overflow-hidden ${
+        isProcessing ? 'animate-pulse shadow-lg' : ''
+      }`}
       style={{
         position: 'absolute',
         left: card.position.x - card.size.width / 2,
         top: card.position.y - card.size.height / 2,
         width: card.size.width,
         height: card.size.height,
+        boxShadow: isProcessing ? '0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3)' : undefined,
+        border: isProcessing ? '2px solid #10b981' : undefined,
       }}
       onClick={handleCardClick}
     >

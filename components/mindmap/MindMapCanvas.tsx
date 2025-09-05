@@ -43,6 +43,8 @@ export function MindMapCanvas({
   const [editNameValue, setEditNameValue] = useState(projectName);
   const [isExecutionAnimating, setIsExecutionAnimating] = useState(false);
   const [animatedConnections, setAnimatedConnections] = useState<string[]>([]);
+  const [processingConnections, setProcessingConnections] = useState<string[]>([]);
+  const [processingCards, setProcessingCards] = useState<string[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -149,6 +151,8 @@ export function MindMapCanvas({
 
     setIsExecutionAnimating(true);
     setAnimatedConnections([]);
+    setProcessingConnections([]);
+    setProcessingCards([]);
 
     // First collapse all branches to ensure they start collapsed
     const collapsedData = collapseAllBranches(mindMapData);
@@ -208,31 +212,44 @@ export function MindMapCanvas({
       setTimeout(() => {
         setAnimatedConnections(prev => [...prev, connectionId]);
         
-        // If this is the first connection (root to branch), expand the branch after the particle reaches it
-        if (index === 0) {
-          // Wait for the particle to travel (3 seconds) then expand the branch
-          setTimeout(() => {
+        // After 3 trips (3 seconds), stop particle animation and start processing state
+        setTimeout(() => {
+          setAnimatedConnections(prev => prev.filter(id => id !== connectionId));
+          setProcessingConnections(prev => [...prev, connectionId]);
+          
+          // If this is the first connection (root to branch), expand the branch
+          if (index === 0) {
             const currentData = mindMapDataRef.current;
             if (currentData) {
               const taskCard = currentData.cards[taskId];
               if (taskCard && taskCard.parentId) {
+                // Add branch card to processing state
+                setProcessingCards(prev => [...prev, taskCard.parentId]);
+                
                 const updatedData = toggleChildrenVisibility(currentData, taskCard.parentId);
                 setMindMapData(updatedData);
                 mindMapDataRef.current = updatedData;
               }
             }
-          }, 3000); // 3 seconds to match the particle animation duration
-        }
+          }
+          
+          // If this is the last connection, add the final task to processing
+          if (index === connectionIds.length - 1) {
+            setProcessingCards(prev => [...prev, taskId]);
+          }
+        }, 3000); // Wait for 3 trips to complete
         
-        // Reset animation after the last connection (and give time for the particle to complete its journey)
+        // Reset all processing states after 7 seconds of glow effect
         if (index === connectionIds.length - 1) {
           setTimeout(() => {
             setIsExecutionAnimating(false);
             setAnimatedConnections([]);
-          }, 3000); // Increased to let the particle complete its animation
+            setProcessingConnections([]);
+            setProcessingCards([]);
+          }, 10000); // 3s for particles + 7s for glow effect
         }
       }, delay);
-      delay += index === 0 ? 3500 : 2500; // Extra delay after first connection to allow branch expansion
+      delay += index === 0 ? 4000 : 4000; // 4 seconds between each connection phase
     });
   };
 
@@ -303,6 +320,8 @@ export function MindMapCanvas({
       return null;
     }
 
+    const isProcessing = processingCards.includes(card.id);
+
     switch (card.type) {
       case 'root':
         return (
@@ -329,6 +348,7 @@ export function MindMapCanvas({
             onClick={handleCardClick}
             onToggleChildren={handleToggleChildren}
             childrenVisible={childrenVisible}
+            isProcessing={isProcessing}
           />
         );
       case 'task':
@@ -338,6 +358,7 @@ export function MindMapCanvas({
             card={card}
             onClick={handleCardClick}
             onExecute={handleTaskExecute}
+            isProcessing={isProcessing}
           />
         );
       default:
@@ -442,6 +463,7 @@ export function MindMapCanvas({
                 connections={mindMapData.connections}
                 canvasSize={canvasSize}
                 animatedConnections={animatedConnections}
+                processingConnections={processingConnections}
               />
               
               {/* Cards */}
