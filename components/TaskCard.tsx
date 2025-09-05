@@ -100,19 +100,19 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           <Button
             onClick={handleExecuteTask}
             disabled={isExecuting}
-            size="sm"
-            className="w-full bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+            size="default"
+            className="w-full bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 min-h-[40px] overflow-hidden"
           >
             {isExecuting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Iniciando...
-              </>
+              <div className="flex items-center justify-center gap-2 truncate">
+                <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                <span className="truncate">Iniciando...</span>
+              </div>
             ) : (
-              <>
-                <Code className="w-4 h-4 mr-2" />
-                Enviar a Editor
-              </>
+              <div className="flex items-center justify-center gap-2 truncate">
+                <Code className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Enviar a Editor</span>
+              </div>
             )}
           </Button>
         );
@@ -120,12 +120,14 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
         return (
           <Button
             disabled
-            size="sm"
+            size="default"
             variant="outline"
-            className="w-full text-yellow-600 border-yellow-300 cursor-not-allowed"
+            className="w-full text-yellow-600 border-yellow-300 cursor-not-allowed min-h-[40px] overflow-hidden"
           >
-            <Link className="w-4 h-4 mr-2" />
-            Esperando dependencias
+            <div className="flex items-center justify-center gap-2 truncate">
+              <Link className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Esperando dependencias</span>
+            </div>
           </Button>
         );
       case 'in_progress':
@@ -133,19 +135,19 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           <Button
             onClick={handleExecuteTask}
             disabled={isExecuting}
-            size="sm"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            size="default"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white min-h-[40px] overflow-hidden"
           >
             {isExecuting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Continuando...
-              </>
+              <div className="flex items-center justify-center gap-2 truncate">
+                <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                <span className="truncate">Continuando...</span>
+              </div>
             ) : (
-              <>
-                <Code className="w-4 h-4 mr-2" />
-                Continuar
-              </>
+              <div className="flex items-center justify-center gap-2 truncate">
+                <Code className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Continuar</span>
+              </div>
             )}
           </Button>
         );
@@ -153,12 +155,14 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
         return (
           <Button
             disabled
-            size="sm"
+            size="default"
             variant="outline"
-            className="w-full text-gray-600 border-gray-300 cursor-not-allowed"
+            className="w-full text-gray-600 border-gray-300 cursor-not-allowed min-h-[40px] overflow-hidden"
           >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Completado
+            <div className="flex items-center justify-center gap-2 truncate">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Completado</span>
+            </div>
           </Button>
         );
       default:
@@ -168,39 +172,41 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
 
   if (variant === 'kanban') {
     return (
-      <Card className="bg-card border border-border rounded-xl p-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99]">
-        <CardHeader className="pb-3" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
-          <div className="flex items-center justify-between mb-2">
-            <CardTitle className="text-base font-semibold text-foreground leading-tight">
+      <Card className="bg-card border border-border rounded-xl p-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99] overflow-hidden min-h-[200px]">
+        <CardHeader className="pb-4" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <CardTitle className="text-base font-semibold text-foreground leading-tight truncate flex-1 min-w-0">
               {task.title}
             </CardTitle>
-            {getPriorityBadge(task.priority)}
+            <div className="flex-shrink-0">
+              {getPriorityBadge(task.priority)}
+            </div>
           </div>
           
           {/* Time estimate and dependencies */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
+              <Clock className="w-4 h-4" />
               <span>{task.estimatedTime || '1 hora'}</span>
             </div>
             {task.dependencies && task.dependencies.length > 0 && (
               <div className="flex items-center gap-1">
-                <Link className="w-3 h-3" />
+                <Link className="w-4 h-4" />
                 <span>{task.dependencies.length} dep.</span>
               </div>
             )}
           </div>
         </CardHeader>
         
-        <CardContent>
-          <p className="text-muted-foreground text-sm leading-relaxed mb-3 line-clamp-2">
+        <CardContent className="pt-0">
+          <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2 break-words">
             {task.description}
           </p>
           
           {/* Progress bar for in-progress tasks */}
           {task.status === 'in_progress' && task.progress !== undefined && (
-            <div className="mb-3">
-              <div className="flex justify-between text-xs text-muted-foreground mb-1">
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-muted-foreground mb-2">
                 <span>Progreso</span>
                 <span>{task.progress}%</span>
               </div>
@@ -212,39 +218,19 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
               </div>
             </div>
           )}
-
-          {/* Dependencies list */}
-          {task.dependencies && task.dependencies.length > 0 && (
-            <div className="mb-3 p-2 bg-muted rounded-lg border border-border">
-              <div className="text-xs text-muted-foreground font-medium mb-1">Dependencias:</div>
-              <div className="space-y-1">
-                {task.dependencies.slice(0, 2).map((depId) => (
-                  <div key={depId} className="text-xs text-muted-foreground flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-border" />
-                    Task {depId.slice(-4)}
-                  </div>
-                ))}
-                {task.dependencies.length > 2 && (
-                  <div className="text-xs text-muted-foreground">
-                    +{task.dependencies.length - 2} más...
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
           
           {/* Execution feedback */}
           {executionResult && (
-            <div className="flex items-center gap-2 mb-3 p-2 bg-success/10 border border-success/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3 p-2 bg-success/10 border border-success/20 rounded-lg overflow-hidden">
               <CheckCircle className="w-4 h-4 text-success-foreground flex-shrink-0" />
-              <p className="text-success-foreground text-xs">{executionResult}</p>
+              <p className="text-success-foreground text-xs truncate flex-1">{executionResult}</p>
             </div>
           )}
           
           {executionError && (
-            <div className="flex items-center gap-2 mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3 p-2 bg-destructive/10 border border-destructive/20 rounded-lg overflow-hidden">
               <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0" />
-              <p className="text-destructive text-xs">{executionError}</p>
+              <p className="text-destructive text-xs truncate flex-1">{executionError}</p>
             </div>
           )}
           

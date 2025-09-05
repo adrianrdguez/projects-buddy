@@ -41,11 +41,11 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
   const taskCount = column.tasks.length;
 
   return (
-    <div className={`flex flex-col h-full border rounded-xl ${theme.border} bg-card backdrop-blur-sm shadow-sm`}>
+    <div className={`flex flex-col h-full border rounded-xl ${theme.border} bg-card backdrop-blur-sm shadow-sm overflow-hidden`}>
       {/* Column Header */}
-      <div className={`flex items-center justify-between p-4 border-b ${theme.border}`}>
-        <h3 className={`font-semibold text-sm tracking-tight ${theme.header}`}>{column.title}</h3>
-        <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${theme.badge}`}>
+      <div className={`flex items-center justify-between p-4 border-b ${theme.border} min-w-0`}>
+        <h3 className={`font-semibold text-sm tracking-tight ${theme.header} truncate flex-1 min-w-0`}>{column.title}</h3>
+        <div className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${theme.badge} flex-shrink-0`}>
           {taskCount}
         </div>
       </div>
