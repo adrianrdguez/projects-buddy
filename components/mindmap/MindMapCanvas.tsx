@@ -46,6 +46,7 @@ export function MindMapCanvas({
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const mindMapDataRef = useRef<MindMapData | null>(null);
   
   const { zoomState, zoomIn, zoomOut, resetZoom, pan, getTransform } = useZoom(0.8);
 
@@ -116,9 +117,11 @@ export function MindMapCanvas({
       const adaptedCanvasSize = { ...canvasSize, height: estimatedHeight };
       const positionedData = positionCards(data, adaptedCanvasSize);
       setMindMapData(positionedData);
+      mindMapDataRef.current = positionedData;
       setCanvasSize(adaptedCanvasSize);
     } else {
       setMindMapData(null);
+      mindMapDataRef.current = null;
     }
   }, [tasks, projectName]);
 
@@ -127,11 +130,30 @@ export function MindMapCanvas({
     console.log('Regenerating project...');
   };
 
+  const collapseAllBranches = (data: MindMapData): MindMapData => {
+    const updatedCards = { ...data.cards };
+    
+    // Hide all task cards (keep only root and branch cards visible)
+    Object.keys(updatedCards).forEach(cardId => {
+      const card = updatedCards[cardId];
+      if (card.type === 'task') {
+        updatedCards[cardId] = { ...card, visible: false };
+      }
+    });
+    
+    return { ...data, cards: updatedCards };
+  };
+
   const handleStartExecution = () => {
     if (!mindMapData || isExecutionAnimating) return;
 
     setIsExecutionAnimating(true);
     setAnimatedConnections([]);
+
+    // First collapse all branches to ensure they start collapsed
+    const collapsedData = collapseAllBranches(mindMapData);
+    setMindMapData(collapsedData);
+    mindMapDataRef.current = collapsedData;
 
     // Find the first task to execute (one with no dependencies or all dependencies completed)
     const readyTasks = tasks.filter(task => {
@@ -148,20 +170,13 @@ export function MindMapCanvas({
 
     const firstTask = readyTasks[0];
 
-    // Show the branch and task cards
-    const taskCard = mindMapData.cards[firstTask.id];
-    if (taskCard && taskCard.parentId) {
-      const updatedData = toggleChildrenVisibility(mindMapData, taskCard.parentId);
-      setMindMapData(updatedData);
-    }
-
     // Find the path from root to the first task
-    const pathToFirstTask = findPathToTask(mindMapData, firstTask.id);
+    const pathToFirstTask = findPathToTask(collapsedData, firstTask.id);
     
-    // Small delay to let the cards appear, then animate
+    // Small delay to let the collapse happen, then start animation
     setTimeout(() => {
-      animatePathConnections(pathToFirstTask);
-    }, 300);
+      animatePathConnections(pathToFirstTask, firstTask.id);
+    }, 100);
   };
 
   const findPathToTask = (data: MindMapData, taskId: string): string[] => {
@@ -186,12 +201,28 @@ export function MindMapCanvas({
     return connections;
   };
 
-  const animatePathConnections = (connectionIds: string[]) => {
+  const animatePathConnections = (connectionIds: string[], taskId: string) => {
     let delay = 0;
     
     connectionIds.forEach((connectionId, index) => {
       setTimeout(() => {
         setAnimatedConnections(prev => [...prev, connectionId]);
+        
+        // If this is the first connection (root to branch), expand the branch after the particle reaches it
+        if (index === 0) {
+          // Wait for the particle to travel (3 seconds) then expand the branch
+          setTimeout(() => {
+            const currentData = mindMapDataRef.current;
+            if (currentData) {
+              const taskCard = currentData.cards[taskId];
+              if (taskCard && taskCard.parentId) {
+                const updatedData = toggleChildrenVisibility(currentData, taskCard.parentId);
+                setMindMapData(updatedData);
+                mindMapDataRef.current = updatedData;
+              }
+            }
+          }, 3000); // 3 seconds to match the particle animation duration
+        }
         
         // Reset animation after the last connection (and give time for the particle to complete its journey)
         if (index === connectionIds.length - 1) {
@@ -201,7 +232,7 @@ export function MindMapCanvas({
           }, 3000); // Increased to let the particle complete its animation
         }
       }, delay);
-      delay += 2500; // 2.5s between each connection to let the particle complete its journey
+      delay += index === 0 ? 3500 : 2500; // Extra delay after first connection to allow branch expansion
     });
   };
 
@@ -227,6 +258,7 @@ export function MindMapCanvas({
     if (mindMapData) {
       const updatedData = toggleChildrenVisibility(mindMapData, cardId);
       setMindMapData(updatedData);
+      mindMapDataRef.current = updatedData;
     }
   };
 

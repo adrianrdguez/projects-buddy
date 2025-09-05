@@ -15,21 +15,39 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
     const endY = to.position.y;
 
     if (type === 'hierarchy') {
+      // Calculate edge points for better particle animation
+      let actualStartX = startX;
+      let actualStartY = startY;
+      let actualEndX = endX;
+      let actualEndY = endY;
+
+      // Adjust start point to edge of source card
+      if (from.type === 'root') {
+        actualStartY = startY + (from.size.height / 2); // Bottom edge of root card
+      } else if (from.type === 'branch') {
+        actualStartY = startY + (from.size.height / 2); // Bottom edge of branch card
+      }
+
+      // Adjust end point to edge of target card  
+      if (to.type === 'branch') {
+        actualEndY = endY - (to.size.height / 2); // Top edge of branch card
+      } else if (to.type === 'task') {
+        actualEndY = endY - (to.size.height / 2); // Top edge of task card
+      }
+
       // Vertical tree connections: smooth curves for parent-child relationships
       if (from.type === 'root' && to.type === 'branch') {
-        // Root to branch: vertical line with slight curve
-        const midY = startY + (endY - startY) * 0.6;
-        return `M ${startX} ${startY + 100} Q ${startX} ${midY} ${endX} ${endY - 60}`;
+        const midY = actualStartY + (actualEndY - actualStartY) * 0.6;
+        return `M ${actualStartX} ${actualStartY} Q ${actualStartX} ${midY} ${actualEndX} ${actualEndY}`;
       } else if (from.type === 'branch' && to.type === 'task') {
-        // Branch to task: curved line
-        const midY = startY + (endY - startY) * 0.5;
-        return `M ${startX} ${startY + 60} Q ${(startX + endX) / 2} ${midY} ${endX} ${endY - 50}`;
+        const midY = actualStartY + (actualEndY - actualStartY) * 0.5;
+        return `M ${actualStartX} ${actualStartY} Q ${(actualStartX + actualEndX) / 2} ${midY} ${actualEndX} ${actualEndY}`;
       }
       
       // Default curved connection
-      const midX = (startX + endX) / 2;
-      const midY = (startY + endY) / 2;
-      return `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`;
+      const midX = (actualStartX + actualEndX) / 2;
+      const midY = (actualStartY + actualEndY) / 2;
+      return `M ${actualStartX} ${actualStartY} Q ${midX} ${midY} ${actualEndX} ${actualEndY}`;
     } else {
       // Dependency connections: dashed lines
       return `M ${startX} ${startY} L ${endX} ${endY}`;
@@ -55,13 +73,6 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
     }
   };
 
-  const getArrowMarker = (type: 'dependency' | 'hierarchy', isAnimated: boolean = false) => {
-    if (type === 'hierarchy') {
-      return isAnimated ? 'url(#hierarchy-arrow-animated)' : 'url(#hierarchy-arrow)';
-    } else {
-      return 'url(#dependency-arrow)';
-    }
-  };
 
   return (
     <svg
@@ -70,47 +81,6 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
       height={canvasSize.height}
       style={{ overflow: 'visible' }}
     >
-      {/* Define arrow markers */}
-      <defs>
-        <marker
-          id="hierarchy-arrow"
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="3"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--primary))" opacity="0.6" />
-        </marker>
-        <marker
-          id="hierarchy-arrow-animated"
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="3"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d="M0,0 L0,6 L9,3 z" fill="#10b981">
-            <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
-          </path>
-        </marker>
-        <marker
-          id="dependency-arrow"
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="3"
-          markerWidth="4"
-          markerHeight="4"
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--muted-foreground))" opacity="0.4" />
-        </marker>
-      </defs>
 
       {connections
         .filter(connection => cards[connection.from] && cards[connection.to])
@@ -131,7 +101,6 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
                 id={pathId}
                 d={pathData}
                 style={getConnectionStyle(connection.type, isAnimated)}
-                markerEnd={getArrowMarker(connection.type, isAnimated)}
                 className="transition-all duration-500"
               />
               
@@ -149,6 +118,7 @@ export function ConnectionLines({ cards, connections, canvasSize, animatedConnec
                     repeatCount="indefinite"
                     rotate="auto"
                     path={pathData}
+                    begin="0s"
                   />
                   <animate
                     attributeName="r"
