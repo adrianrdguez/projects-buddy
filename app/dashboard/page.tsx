@@ -6,6 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { MindMapCanvas } from "@/components/mindmap/MindMapCanvas";
 import { InputBar } from "@/components/InputBar";
+import { ProjectPathDialog } from "@/components/ProjectPathDialog";
 import { Project, Task, GenerateTasksResponse, ProjectsResponse, ExecuteTaskResponse } from "@/lib/types";
 import { makeAuthenticatedRequest } from "@/lib/api";
 
@@ -20,6 +21,8 @@ export default function Dashboard() {
   const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [projectPathDialogOpen, setProjectPathDialogOpen] = useState(false);
+  const [isUpdatingProjectPath, setIsUpdatingProjectPath] = useState(false);
 
   // Protect route - redirect to login if not authenticated
   useEffect(() => {
@@ -325,6 +328,43 @@ export default function Dashboard() {
     }
   };
 
+  const handleConfigureProject = () => {
+    setProjectPathDialogOpen(true);
+  };
+
+  const handleProjectPathSave = async (projectPath: string) => {
+    if (!activeProjectId) return;
+
+    try {
+      setIsUpdatingProjectPath(true);
+      const response = await makeAuthenticatedRequest(`/api/projects/${activeProjectId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          projectPath: projectPath
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update project path in local state
+        setProjects(prev => prev.map(project => 
+          project.id === activeProjectId 
+            ? { ...project, projectPath: projectPath }
+            : project
+        ));
+        setProjectPathDialogOpen(false);
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to update project path');
+      }
+    } catch (err) {
+      setError('Network error: Could not update project path');
+    } finally {
+      setIsUpdatingProjectPath(false);
+    }
+  };
+
   // Show loading only on initial load, not when switching tabs
   if (loading || (isLoadingProjects && !hasLoadedProjects)) {
     return (
@@ -375,6 +415,7 @@ export default function Dashboard() {
           onTaskClick={handleTaskClick}
           onTaskExecute={handleTaskExecute}
           onProjectNameChange={handleProjectNameChange}
+          onConfigureProject={handleConfigureProject}
           isLoading={isLoadingTasks}
         />
 
@@ -385,6 +426,15 @@ export default function Dashboard() {
         isLoading={isLoadingTasks}
         placeholder={activeProject ? "Describe las tareas para tu proyecto..." : "Selecciona un proyecto primero"}
         sidebarCollapsed={sidebarCollapsed}
+      />
+
+      {/* Project Path Configuration Dialog */}
+      <ProjectPathDialog
+        project={activeProject}
+        open={projectPathDialogOpen}
+        onOpenChange={setProjectPathDialogOpen}
+        onSave={handleProjectPathSave}
+        isLoading={isUpdatingProjectPath}
       />
     </div>
   );

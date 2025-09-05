@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ExecuteTaskRequest, ExecuteTaskResponse, ApiError } from '@/lib/types';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest): Promise<NextResponse<ExecuteTaskResponse | ApiError>> {
   try {
+    // Get the authenticated user and supabase client
+    const authResult = await getAuthenticatedUser(request);
+    const { user, error: authError, supabase: userSupabase } = authResult;
+    
+    if (authError || !user || !userSupabase) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized'
+        },
+        { status: 401 }
+      );
+    }
+
     const body: ExecuteTaskRequest = await request.json();
     
     // Validate request body
@@ -16,24 +31,26 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExecuteTa
       );
     }
 
-    // Mock task data retrieval (replace with actual database lookup)
-    const task = await getTaskById(body.taskId);
+    // Get task and project data from database
+    const taskData = await getTaskWithProject(userSupabase, body.taskId, user.id);
     
-    if (!task) {
+    if (!taskData) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Task not found'
+          error: 'Task not found or access denied'
         },
         { status: 404 }
       );
     }
 
+    const { task, project } = taskData;
+
     // Generate optimized prompt for the task
-    const optimizedPrompt = generatePromptForTask(task);
+    const optimizedPrompt = generatePromptForTask(task, project);
     
-    // Call external Claude Code server
-    const executionResult = await executeWithClaudeCode(optimizedPrompt);
+    // Call external Claude Code server with project context
+    const executionResult = await executeWithClaudeCode(optimizedPrompt, project.projectPath);
     
     return NextResponse.json({
       success: true,
@@ -64,32 +81,67 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExecuteTa
   }
 }
 
-async function getTaskById(taskId: string) {
-  // Mock implementation - replace with actual database query
-  const mockTasks = [
-    {
-      id: 'task-1',
-      title: 'Setup Authentication Provider',
-      description: 'Configure authentication service (Supabase, Auth0, or Firebase)',
-      priority: 'high',
-      status: 'pending'
-    },
-    {
-      id: 'task-2',
-      title: 'Create Login Component',
-      description: 'Build login form with email/password and social auth options',
-      priority: 'high',
-      status: 'pending'
+async function getTaskWithProject(supabase: any, taskId: string, userId: string) {
+  try {
+    // Get task with project information
+    const { data, error } = await supabase
+      .from('tasks')
+      .select(`
+        *,
+        projects (
+          id,
+          name,
+          project_path,
+          tech_stack,
+          description
+        )
+      `)
+      .eq('id', taskId)
+      .eq('projects.user_id', userId)
+      .single();
+
+    if (error || !data) {
+      console.error('Error fetching task with project:', error);
+      return null;
     }
-  ];
-  
-  return mockTasks.find(task => task.id === taskId);
+
+    return {
+      task: {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        status: data.status,
+        estimatedTime: data.estimated_time,
+        targetFile: data.target_file,
+        aiPrompt: data.ai_prompt,
+        generatedPrompt: data.generated_prompt,
+      },
+      project: {
+        id: data.projects.id,
+        name: data.projects.name,
+        projectPath: data.projects.project_path,
+        techStack: data.projects.tech_stack || [],
+        description: data.projects.description,
+      }
+    };
+  } catch (error) {
+    console.error('Error in getTaskWithProject:', error);
+    return null;
+  }
 }
 
-function generatePromptForTask(task: any): string {
-  const basePrompt = `Task: ${task.title}
-Description: ${task.description}
+function generatePromptForTask(task: any, project: any): string {
+  const basePrompt = `Project: ${project.name}
+${project.description ? `Project Description: ${project.description}` : ''}
+Tech Stack: ${project.techStack.join(', ')}
+${project.projectPath ? `Project Directory: ${project.projectPath}` : ''}
+
+Task: ${task.title}
+Task Description: ${task.description}
 Priority: ${task.priority}
+${task.estimatedTime ? `Estimated Time: ${task.estimatedTime}` : ''}
+${task.targetFile ? `Target File: ${task.targetFile}` : ''}
 
 Please implement this task following best practices:
 - Use TypeScript with proper type definitions
@@ -98,6 +150,7 @@ Please implement this task following best practices:
 - Add appropriate comments for complex logic
 - Ensure responsive design if UI-related
 - Follow security best practices
+- Work within the existing project structure and tech stack
 
 Generate clean, production-ready code that accomplishes this task.`;
 
@@ -139,34 +192,83 @@ Additional requirements for authentication:
   return basePrompt;
 }
 
-async function executeWithClaudeCode(prompt: string): Promise<{status: string, filePath?: string}> {
-  const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
-  
+async function executeWithClaudeCode(prompt: string, projectPath?: string): Promise<{status: string, filePath?: string}> {
   try {
-    const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt: prompt,
-        language: 'typescript',
-        framework: 'nextjs'
-      }),
-      // 30 second timeout for code execution
-      signal: AbortSignal.timeout(30000)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Claude Code server responded with ${response.status}: ${response.statusText}`);
+    // If we have a project path, open Cursor in that directory
+    if (projectPath) {
+      const { spawn } = require('child_process');
+      
+      // Open Cursor with the project directory and prompt
+      const cursorProcess = spawn('cursor', [projectPath], {
+        detached: true,
+        stdio: 'ignore'
+      });
+      
+      cursorProcess.unref();
+      
+      // Wait a moment for Cursor to open
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Now send the prompt to Claude Code (if available) or just return success
+      try {
+        const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
+        const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: prompt,
+            language: 'typescript',
+            framework: 'nextjs',
+            projectPath: projectPath
+          }),
+          signal: AbortSignal.timeout(30000)
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          return {
+            status: result.success ? 'completed' : 'in_progress',
+            filePath: result.filePath
+          };
+        }
+      } catch (claudeError) {
+        console.log('Claude Code server not available, but Cursor opened successfully');
+      }
+      
+      // If Claude Code server is not available, just return success for opening Cursor
+      return {
+        status: 'in_progress',
+        filePath: projectPath
+      };
+    } else {
+      // Fallback: try to use Claude Code server without project path
+      const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
+      const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          language: 'typescript',
+          framework: 'nextjs'
+        }),
+        signal: AbortSignal.timeout(30000)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Claude Code server responded with ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      return {
+        status: result.success ? 'completed' : 'failed',
+        filePath: result.filePath
+      };
     }
-    
-    const result = await response.json();
-    
-    return {
-      status: result.success ? 'completed' : 'failed',
-      filePath: result.filePath
-    };
     
   } catch (error) {
     console.error('Failed to execute with Claude Code:', error);
@@ -176,7 +278,7 @@ async function executeWithClaudeCode(prompt: string): Promise<{status: string, f
         throw new Error('Claude Code server execution timeout');
       }
       if (error.message.includes('fetch')) {
-        throw new Error('Claude Code server is not available');
+        throw new Error('Claude Code server is not available, but Cursor may have opened');
       }
     }
     

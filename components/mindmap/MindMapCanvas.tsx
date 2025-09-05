@@ -24,6 +24,7 @@ interface MindMapCanvasProps {
   onTaskClick?: (task: Task) => void;
   onTaskExecute?: (task: Task) => void;
   onProjectNameChange?: (newName: string) => void;
+  onConfigureProject?: () => void;
   isLoading?: boolean;
 }
 
@@ -33,6 +34,7 @@ export function MindMapCanvas({
   onTaskClick, 
   onTaskExecute, 
   onProjectNameChange,
+  onConfigureProject,
   isLoading = false 
 }: MindMapCanvasProps) {
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
@@ -331,6 +333,7 @@ export function MindMapCanvas({
             onRegenerate={handleRootRegenerate}
             onClick={handleCardClick}
             onStartExecution={handleStartExecution}
+            onConfigureProject={onConfigureProject}
           />
         );
       case 'branch':

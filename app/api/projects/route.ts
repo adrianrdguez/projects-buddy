@@ -70,6 +70,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProjectsRe
       description: row.description || '',
       tech_stack: row.tech_stack || [],
       status: row.status || 'active',
+      projectPath: row.project_path || undefined,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at)
     }));
@@ -209,6 +210,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProjectsR
       description: data.description || '',
       tech_stack: data.tech_stack || [],
       status: data.status,
+      projectPath: data.project_path || undefined,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

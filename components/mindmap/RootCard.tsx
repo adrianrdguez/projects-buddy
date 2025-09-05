@@ -8,9 +8,10 @@ interface RootCardProps {
   onRegenerate?: () => void;
   onClick?: (card: MindMapCard) => void;
   onStartExecution?: () => void;
+  onConfigureProject?: () => void;
 }
 
-export function RootCard({ card, onRegenerate, onClick, onStartExecution }: RootCardProps) {
+export function RootCard({ card, onRegenerate, onClick, onStartExecution, onConfigureProject }: RootCardProps) {
   const handleClick = () => {
     if (onClick) {
       onClick(card);
@@ -28,6 +29,13 @@ export function RootCard({ card, onRegenerate, onClick, onStartExecution }: Root
     e.stopPropagation();
     if (onStartExecution) {
       onStartExecution();
+    }
+  };
+
+  const handleConfigureProject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onConfigureProject) {
+      onConfigureProject();
     }
   };
 
@@ -57,8 +65,9 @@ export function RootCard({ card, onRegenerate, onClick, onStartExecution }: Root
               <RefreshCw className="w-4 h-4 text-primary" />
             </button>
             <button
+              onClick={handleConfigureProject}
               className="p-2 rounded-lg hover:bg-primary/20 transition-colors"
-              title="Configuración"
+              title="Configurar directorio del proyecto"
             >
               <Settings className="w-4 h-4 text-primary" />
             </button>
