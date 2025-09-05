@@ -1,40 +1,34 @@
-Replace the Kanban layout with a mind map/flowchart style canvas that shows the logical flow and relationships between tasks.
+# Add Project Directory Selector to Web App
 
-LAYOUT CONCEPT:
-- Central root card: Main project idea (largest, prominent position)
-- Branch cards: Major phases/categories emanating from center
-- Leaf cards: Specific executable tasks connected to their parent branches
-- Connecting lines: Show dependencies and logical flow between cards
-- Organic positioning: Cards positioned to show natural progression
+I need to add a directory/folder selector to my web app so users can choose where their AI-generated code will be executed. Currently, when users generate tasks, the system opens Cursor/IDE randomly without knowing where the project should be created.
 
-VISUAL HIERARCHY:
-- Root card: Large, central, different styling (project overview)
-- Branch cards: Medium size, positioned around root (Setup, Frontend, Backend, etc.)
-- Task cards: Smaller, connected to branches with lines/arrows
-- Connection lines: SVG paths or CSS lines showing relationships
+## Current Flow:
+1. User describes project in web app
+2. AI generates tasks
+3. User clicks "execute task" 
+4. Server opens Cursor but doesn't know which directory to use
 
-CARD TYPES:
-- Root: Project description, overall goal, tech stack
-- Branch: Phase/category with summary (e.g., "Frontend Development - Create user interface")
-- Task: Executable action with "Send to Editor" button
+## Needed Changes:
 
-INTERACTION:
-- Clicking root card could regenerate the entire breakdown
-- Branch cards show/hide their connected task cards
-- Task cards execute via existing /api/execute-task endpoint
-- Visual feedback when tasks complete (color changes, checkmarks)
+### 1. Add Directory Picker to Frontend
+- Add a folder selection input/button in the project creation flow
+- Store the selected directory path in the project data
+- Show the current selected directory in the UI
 
-POSITIONING ALGORITHM:
-- Root card at center (50% x, 50% y)
-- Branch cards arranged in circle/radial pattern around root
-- Task cards positioned near their parent branches
-- Connecting lines draw paths between related cards
+### 2. Update API to Handle Project Path
+- Modify the task execution endpoint to receive `projectPath`
+- Update the server to open Cursor in the specific directory
+- Include project path context in prompts sent to Cursor
 
-TECHNICAL IMPLEMENTATION:
-- Use CSS Grid/Flexbox for base positioning
-- SVG overlay for connection lines
-- React state to track card positions and connections
-- Responsive layout that works on different screen sizes
-- Smooth animations when cards appear/move
+### 3. Enhanced Task Execution
+- When opening Cursor, use: `cursor "${projectPath}"`
+- Include directory context in the AI prompt so it knows the project structure
 
-Replace the current column-based layout with this hierarchical mind map that tells the story of how the project should be built, not just what needs to be built.
+## Files to modify:
+- Frontend: Add directory picker component
+- API route: Update task execution endpoint
+- Server: Modify Cursor launch command
+
+The goal is that when a user clicks "execute task", Cursor opens in their chosen project directory with full context of where to create/modify files.
+
+Please implement this directory selection and context passing system.

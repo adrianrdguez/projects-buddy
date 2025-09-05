@@ -50,6 +50,8 @@ export interface SidebarProps {
   onNewProject: () => void;
   onDeleteProject?: (projectId: string) => void;
   onToggle?: (isCollapsed: boolean) => void;
+  user?: { name?: string; email?: string; avatar_url?: string };
+  onLogout?: () => void;
 }
 
 export interface InputBarProps {

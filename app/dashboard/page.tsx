@@ -190,6 +190,16 @@ export default function Dashboard() {
     setSidebarCollapsed(isCollapsed);
   };
 
+  const handleLogout = () => {
+    // Clear any local state/cache if needed
+    setProjects([]);
+    setTasks([]);
+    setActiveProjectId(null);
+    
+    // Redirect to logout/login page
+    router.push('/');
+  };
+
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task);
   };
@@ -391,6 +401,12 @@ export default function Dashboard() {
         onNewProject={createNewProject}
         onDeleteProject={handleDeleteProject}
         onToggle={handleSidebarToggle}
+        user={{
+          name: user?.user_metadata?.full_name || user?.user_metadata?.name,
+          email: user?.email,
+          avatar_url: user?.user_metadata?.avatar_url
+        }}
+        onLogout={handleLogout}
       />
       
       <div className={`flex flex-col flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-12' : 'ml-0'}`}>
