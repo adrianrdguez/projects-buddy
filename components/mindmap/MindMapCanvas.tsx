@@ -41,6 +41,8 @@ export function MindMapCanvas({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState(projectName);
+  const [isExecutionAnimating, setIsExecutionAnimating] = useState(false);
+  const [animatedConnections, setAnimatedConnections] = useState<string[]>([]);
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -125,6 +127,84 @@ export function MindMapCanvas({
     console.log('Regenerating project...');
   };
 
+  const handleStartExecution = () => {
+    if (!mindMapData || isExecutionAnimating) return;
+
+    setIsExecutionAnimating(true);
+    setAnimatedConnections([]);
+
+    // Find the first task to execute (one with no dependencies or all dependencies completed)
+    const readyTasks = tasks.filter(task => {
+      if (!task.dependencies || task.dependencies.length === 0) return true;
+      return task.dependencies.every(depId => 
+        tasks.some(t => t.id === depId && t.status === 'completed')
+      );
+    });
+
+    if (readyTasks.length === 0) {
+      setIsExecutionAnimating(false);
+      return;
+    }
+
+    const firstTask = readyTasks[0];
+
+    // Show the branch and task cards
+    const taskCard = mindMapData.cards[firstTask.id];
+    if (taskCard && taskCard.parentId) {
+      const updatedData = toggleChildrenVisibility(mindMapData, taskCard.parentId);
+      setMindMapData(updatedData);
+    }
+
+    // Find the path from root to the first task
+    const pathToFirstTask = findPathToTask(mindMapData, firstTask.id);
+    
+    // Small delay to let the cards appear, then animate
+    setTimeout(() => {
+      animatePathConnections(pathToFirstTask);
+    }, 300);
+  };
+
+  const findPathToTask = (data: MindMapData, taskId: string): string[] => {
+    const connections: string[] = [];
+    const taskCard = data.cards[taskId];
+    
+    if (!taskCard || !taskCard.parentId) return connections;
+    
+    // Find branch card
+    const branchCard = data.cards[taskCard.parentId];
+    
+    if (branchCard && branchCard.parentId) {
+      // Connection from root to branch
+      const rootToBranch = `${branchCard.parentId}->${branchCard.id}`;
+      connections.push(rootToBranch);
+      
+      // Connection from branch to task
+      const branchToTask = `${branchCard.id}->${taskId}`;
+      connections.push(branchToTask);
+    }
+    
+    return connections;
+  };
+
+  const animatePathConnections = (connectionIds: string[]) => {
+    let delay = 0;
+    
+    connectionIds.forEach((connectionId, index) => {
+      setTimeout(() => {
+        setAnimatedConnections(prev => [...prev, connectionId]);
+        
+        // Reset animation after the last connection (and give time for the particle to complete its journey)
+        if (index === connectionIds.length - 1) {
+          setTimeout(() => {
+            setIsExecutionAnimating(false);
+            setAnimatedConnections([]);
+          }, 3000); // Increased to let the particle complete its animation
+        }
+      }, delay);
+      delay += 2500; // 2.5s between each connection to let the particle complete its journey
+    });
+  };
+
   const handleCardClick = (card: MindMapCard) => {
     if (card.type === 'task' && onTaskClick) {
       const task = tasks.find(t => t.id === card.id);
@@ -199,6 +279,7 @@ export function MindMapCanvas({
             card={card}
             onRegenerate={handleRootRegenerate}
             onClick={handleCardClick}
+            onStartExecution={handleStartExecution}
           />
         );
       case 'branch':
@@ -328,6 +409,7 @@ export function MindMapCanvas({
                 cards={mindMapData.cards}
                 connections={mindMapData.connections}
                 canvasSize={canvasSize}
+                animatedConnections={animatedConnections}
               />
               
               {/* Cards */}

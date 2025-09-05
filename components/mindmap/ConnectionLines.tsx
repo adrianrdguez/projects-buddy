@@ -4,9 +4,10 @@ interface ConnectionLinesProps {
   cards: Record<string, MindMapCard>;
   connections: Connection[];
   canvasSize: { width: number; height: number };
+  animatedConnections?: string[];
 }
 
-export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLinesProps) {
+export function ConnectionLines({ cards, connections, canvasSize, animatedConnections = [] }: ConnectionLinesProps) {
   const getConnectionPath = (from: MindMapCard, to: MindMapCard, type: 'dependency' | 'hierarchy') => {
     const startX = from.position.x;
     const startY = from.position.y;
@@ -35,13 +36,13 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
     }
   };
 
-  const getConnectionStyle = (type: 'dependency' | 'hierarchy') => {
+  const getConnectionStyle = (type: 'dependency' | 'hierarchy', isAnimated: boolean = false) => {
     if (type === 'hierarchy') {
       return {
-        stroke: 'hsl(var(--primary))',
-        strokeWidth: 2,
+        stroke: isAnimated ? '#3b82f6' : 'hsl(var(--primary))',
+        strokeWidth: isAnimated ? 3 : 2,
         fill: 'none',
-        opacity: 0.6,
+        opacity: isAnimated ? 0.8 : 0.6,
       };
     } else {
       return {
@@ -54,8 +55,12 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
     }
   };
 
-  const getArrowMarker = (type: 'dependency' | 'hierarchy') => {
-    return type === 'hierarchy' ? 'url(#hierarchy-arrow)' : 'url(#dependency-arrow)';
+  const getArrowMarker = (type: 'dependency' | 'hierarchy', isAnimated: boolean = false) => {
+    if (type === 'hierarchy') {
+      return isAnimated ? 'url(#hierarchy-arrow-animated)' : 'url(#hierarchy-arrow)';
+    } else {
+      return 'url(#dependency-arrow)';
+    }
   };
 
   return (
@@ -80,6 +85,20 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
           <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--primary))" opacity="0.6" />
         </marker>
         <marker
+          id="hierarchy-arrow-animated"
+          viewBox="0 0 10 10"
+          refX="9"
+          refY="3"
+          markerWidth="8"
+          markerHeight="8"
+          orient="auto"
+          markerUnits="strokeWidth"
+        >
+          <path d="M0,0 L0,6 L9,3 z" fill="#10b981">
+            <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
+          </path>
+        </marker>
+        <marker
           id="dependency-arrow"
           viewBox="0 0 10 10"
           refX="9"
@@ -99,15 +118,64 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
         .map((connection, index) => {
           const fromCard = cards[connection.from];
           const toCard = cards[connection.to];
+          const connectionId = `${connection.from}->${connection.to}`;
+          const isAnimated = animatedConnections.includes(connectionId);
+          const pathId = `path-${connection.from}-${connection.to}-${index}`;
+          const pathData = getConnectionPath(fromCard, toCard, connection.type);
+          
           
           return (
-            <path
-              key={`${connection.from}-${connection.to}-${index}`}
-              d={getConnectionPath(fromCard, toCard, connection.type)}
-              style={getConnectionStyle(connection.type)}
-              markerEnd={getArrowMarker(connection.type)}
-              className="transition-opacity duration-300"
-            />
+            <g key={`${connection.from}-${connection.to}-${index}`}>
+              {/* Connection line */}
+              <path
+                id={pathId}
+                d={pathData}
+                style={getConnectionStyle(connection.type, isAnimated)}
+                markerEnd={getArrowMarker(connection.type, isAnimated)}
+                className="transition-all duration-500"
+              />
+              
+
+              {/* Main data particle */}
+              {isAnimated && (
+                <circle
+                  r="8"
+                  fill="#10b981"
+                  opacity="1"
+                  style={{ filter: 'drop-shadow(0 0 8px #10b981)' }}
+                >
+                  <animateMotion
+                    dur="3s"
+                    repeatCount="indefinite"
+                    rotate="auto"
+                    path={pathData}
+                  />
+                  <animate
+                    attributeName="r"
+                    values="6;12;6"
+                    dur="1s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
+              )}
+              
+              {/* Data trail particles */}
+              {isAnimated && (
+                <circle
+                  r="4"
+                  fill="#3b82f6"
+                  opacity="0.7"
+                >
+                  <animateMotion
+                    dur="3s"
+                    repeatCount="indefinite"
+                    rotate="auto"
+                    begin="0.5s"
+                    path={pathData}
+                  />
+                </circle>
+              )}
+            </g>
           );
         })}
     </svg>

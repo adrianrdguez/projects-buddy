@@ -1,14 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MindMapCard } from "@/lib/mindmap-types";
-import { RefreshCw, Settings } from "lucide-react";
+import { RefreshCw, Settings, Play } from "lucide-react";
 
 interface RootCardProps {
   card: MindMapCard;
   onRegenerate?: () => void;
   onClick?: (card: MindMapCard) => void;
+  onStartExecution?: () => void;
 }
 
-export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
+export function RootCard({ card, onRegenerate, onClick, onStartExecution }: RootCardProps) {
   const handleClick = () => {
     if (onClick) {
       onClick(card);
@@ -19,6 +21,13 @@ export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
     e.stopPropagation();
     if (onRegenerate) {
       onRegenerate();
+    }
+  };
+
+  const handleStartExecution = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onStartExecution) {
+      onStartExecution();
     }
   };
 
@@ -62,7 +71,7 @@ export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
           {card.description}
         </p>
         
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-xs mb-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-primary" />
@@ -73,6 +82,15 @@ export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
             {card.children.length} fases
           </div>
         </div>
+
+        <Button 
+          onClick={handleStartExecution}
+          className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+          size="default"
+        >
+          <Play className="w-4 h-4 mr-2" />
+          Comenzar Ejecución
+        </Button>
       </CardContent>
     </Card>
   );
