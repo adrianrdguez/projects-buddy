@@ -25,6 +25,7 @@ interface MindMapCanvasProps {
   onTaskExecute?: (task: Task) => void;
   onProjectNameChange?: (newName: string) => void;
   onConfigureProject?: () => void;
+  onStartExecution?: () => void;
   isLoading?: boolean;
 }
 
@@ -35,6 +36,7 @@ export function MindMapCanvas({
   onTaskExecute, 
   onProjectNameChange,
   onConfigureProject,
+  onStartExecution,
   isLoading = false 
 }: MindMapCanvasProps) {
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
@@ -149,6 +151,12 @@ export function MindMapCanvas({
   };
 
   const handleStartExecution = () => {
+    // Call the actual execution function first
+    if (onStartExecution) {
+      onStartExecution();
+    }
+
+    // Then do the visual animation
     if (!mindMapData || isExecutionAnimating) return;
 
     setIsExecutionAnimating(true);

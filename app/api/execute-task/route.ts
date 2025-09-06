@@ -193,25 +193,40 @@ Additional requirements for authentication:
 }
 
 async function executeWithClaudeCode(prompt: string, projectPath?: string): Promise<{status: string, filePath?: string}> {
+  console.log('executeWithClaudeCode called with:', { projectPath, hasPrompt: !!prompt });
+  
   try {
     // If we have a project path, open Cursor in that directory
-    if (projectPath) {
+    if (projectPath && projectPath.trim() !== '') {
+      console.log('Opening Cursor with project path:', projectPath);
+      
       const { spawn } = require('child_process');
       
-      // Open Cursor with the project directory and prompt
-      const cursorProcess = spawn('cursor', [projectPath], {
-        detached: true,
-        stdio: 'ignore'
+      // Open Cursor with the project directory
+      const cursorProcess = spawn('cursor', [projectPath.trim()], {
+        detached: false,
+        stdio: ['ignore', 'pipe', 'pipe']
       });
       
-      cursorProcess.unref();
+      // Listen for process events for debugging
+      cursorProcess.on('error', (error: any) => {
+        console.error('Failed to start Cursor:', error);
+      });
       
-      // Wait a moment for Cursor to open
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      cursorProcess.on('close', (code: number) => {
+        console.log(`Cursor process exited with code ${code}`);
+      });
       
-      // Now send the prompt to Claude Code (if available) or just return success
+      // Don't wait for Cursor to close, but give it a moment to start
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log('Cursor should now be opening...');
+      
+      // Try to send the prompt to Claude Code server (optional)
       try {
         const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
+        console.log('Attempting to contact Claude Code server...');
+        
         const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {
           method: 'POST',
           headers: {
@@ -223,26 +238,31 @@ async function executeWithClaudeCode(prompt: string, projectPath?: string): Prom
             framework: 'nextjs',
             projectPath: projectPath
           }),
-          signal: AbortSignal.timeout(30000)
+          signal: AbortSignal.timeout(5000) // Reduced timeout
         });
         
         if (response.ok) {
           const result = await response.json();
+          console.log('Claude Code server responded successfully');
           return {
             status: result.success ? 'completed' : 'in_progress',
-            filePath: result.filePath
+            filePath: result.filePath || projectPath
           };
+        } else {
+          console.log('Claude Code server responded with error:', response.status);
         }
       } catch (claudeError) {
-        console.log('Claude Code server not available, but Cursor opened successfully');
+        console.log('Claude Code server not available:', claudeError);
       }
       
-      // If Claude Code server is not available, just return success for opening Cursor
+      // Return success even if Claude Code server is not available
+      console.log('Returning success - Cursor opened, Claude Code server optional');
       return {
         status: 'in_progress',
         filePath: projectPath
       };
     } else {
+      console.log('No project path provided, trying Claude Code server only');
       // Fallback: try to use Claude Code server without project path
       const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
       const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {

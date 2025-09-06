@@ -375,6 +375,53 @@ export default function Dashboard() {
     }
   };
 
+  const handleStartExecution = async () => {
+    if (!activeProject) {
+      setError('No hay proyecto activo');
+      return;
+    }
+
+    // Check if project has a configured path
+    if (!activeProject.projectPath) {
+      setError('Primero configura el directorio del proyecto haciendo clic en ⚙️');
+      return;
+    }
+
+    try {
+      // Create a comprehensive prompt for the project
+      const projectPrompt = `
+Proyecto: ${activeProject.name}
+Directorio: ${activeProject.projectPath}
+Tareas pendientes: ${tasks.length} tareas
+
+Tareas del proyecto:
+${tasks.map(task => `- ${task.title}: ${task.description}`).join('\n')}
+
+Por favor, ayúdame a implementar este proyecto paso a paso.
+Empezaremos con la primera tarea: ${tasks[0]?.title || 'Configurar proyecto'}
+`;
+
+      const response = await makeAuthenticatedRequest('/api/execute-project', {
+        method: 'POST',
+        body: JSON.stringify({
+          projectId: activeProject.id,
+          projectPath: activeProject.projectPath,
+          prompt: projectPrompt
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to start project execution');
+      }
+    } catch (err) {
+      setError('Network error: Could not start project execution');
+    }
+  };
+
   // Show loading only on initial load, not when switching tabs
   if (loading || (isLoadingProjects && !hasLoadedProjects)) {
     return (
@@ -432,6 +479,7 @@ export default function Dashboard() {
           onTaskExecute={handleTaskExecute}
           onProjectNameChange={handleProjectNameChange}
           onConfigureProject={handleConfigureProject}
+          onStartExecution={handleStartExecution}
           isLoading={isLoadingTasks}
         />
 

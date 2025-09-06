@@ -25,36 +25,24 @@ export function DirectoryPicker({
     try {
       setIsSelecting(true);
       
-      // Use the File System Access API (modern browsers)
-      if ('showDirectoryPicker' in window) {
-        const dirHandle = await (window as any).showDirectoryPicker();
-        const path = dirHandle.name; // This will be just the folder name
-        setSelectedPath(path);
-        onPathSelect(path);
-      } else {
-        // Fallback for browsers that don't support File System Access API
-        // Create a hidden input element for directory selection
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.webkitdirectory = true;
-        input.multiple = true;
-        
-        input.onchange = (e: any) => {
-          const files = e.target.files;
-          if (files && files.length > 0) {
-            // Extract the common directory path from the first file
-            const fullPath = files[0].webkitRelativePath;
-            const dirPath = fullPath.split('/')[0];
-            setSelectedPath(dirPath);
-            onPathSelect(dirPath);
-          }
-        };
-        
-        input.click();
+      // For now, let's use a simple prompt to get the full path
+      // This is a temporary solution until we implement a better directory picker
+      const userPath = prompt(
+        'Enter the full path to your project directory:\n\n' +
+        'Examples:\n' +
+        '• /Users/yourname/Projects/my-project\n' +
+        '• /home/user/workspace/project\n' +
+        '• C:\\Users\\YourName\\Projects\\MyProject\n\n' +
+        'Path:'
+      );
+      
+      if (userPath && userPath.trim()) {
+        const cleanPath = userPath.trim();
+        setSelectedPath(cleanPath);
+        onPathSelect(cleanPath);
       }
     } catch (error) {
       console.error('Error selecting directory:', error);
-      // User cancelled or error occurred
     } finally {
       setIsSelecting(false);
     }
