@@ -80,7 +80,7 @@ export function KanbanColumn({ column, onTaskClick, onTaskExecute }: KanbanColum
                   />
                 </svg>
               </div>
-              Sin tareas
+              No tasks
             </div>
           </div>
         )}

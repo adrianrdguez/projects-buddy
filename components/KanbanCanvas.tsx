@@ -84,7 +84,7 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
               {projectName}
             </h2>
             <p className="text-muted-foreground text-sm">
-              {isLoading ? "Generando tareas con IA..." : "Tablero Kanban con dependencias"}
+              {isLoading ? "Generating tasks with AI..." : "Kanban board with dependencies"}
             </p>
           </div>
         </div>
@@ -94,10 +94,10 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-full">
               <Loader2 className="w-8 h-8 text-foreground animate-spin mb-4" />
-              <p className="text-muted-foreground text-sm">Procesando tu solicitud...</p>
+              <p className="text-muted-foreground text-sm">Processing your request...</p>
             </div>
           ) : tasks.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-6 p-4 rounded-xl bg-muted border border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-8 p-8 rounded-xl bg-muted border border-border">
               {columns.map((column) => (
                 <KanbanColumn
                   key={column.id}
@@ -126,10 +126,10 @@ export function KanbanCanvas({ projectName, tasks, onTaskClick, onTaskExecute, i
                   </svg>
                 </div>
                 <h3 className="text-lg font-medium text-foreground mb-2">
-                  No hay tareas aún
+                  No tasks yet
                 </h3>
                 <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                  Usa la barra de entrada de abajo para describir lo que quieres hacer y la IA generará tareas automáticamente con sus dependencias.
+                  Use the input bar below to describe what you want to do and AI will automatically generate tasks with their dependencies.
                 </p>
               </div>
             </div>

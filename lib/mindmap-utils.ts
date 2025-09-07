@@ -14,7 +14,7 @@ export function tasksToMindMapData(tasks: Task[], projectName: string): MindMapD
     title: projectName,
     description: `Proyecto principal con ${tasks.length} tareas organizadas en fases`,
     position: { x: 0, y: 0 }, // Will be positioned at center
-    size: { width: 320, height: 220 },
+    size: { width: 320, height: 240 },
     children: [],
     status: 'ready',
     visible: true,

@@ -35,26 +35,28 @@
   }
 
   .dark {
-    /* Pastel Dark Mode tuned to complement light palette */
-    --background: 230 24% 12%;
-    --foreground: 210 20% 96%;
-    --card: 233 24% 16%;
-    --card-foreground: 210 20% 96%;
-    --popover: 233 24% 16%;
-    --popover-foreground: 210 20% 96%;
-    --primary: 242 84% 66%;
-    --primary-foreground: 233 24% 16%;
-    --secondary: 42 96% 57%;
-    --secondary-foreground: 233 24% 16%;
-    --muted: 233 18% 22%;
-    --muted-foreground: 220 12% 70%;
-    --accent: 233 18% 22%;
-    --accent-foreground: 210 20% 96%;
-    --destructive: 0 74% 58%;
-    --destructive-foreground: 210 20% 96%;
-    --border: 232 18% 28%;
-    --input: 232 18% 28%;
-    --ring: 242 84% 66%;
+    /* Dark Mode inspired by landing page gradients - adjusted for better contrast */
+    --background: 222 84% 4%; /* #0B0F1E very dark blue-gray */
+    --foreground: 210 40% 98%; /* #F8FAFC light gray-blue */
+    --card: 220 26% 14%; /* #1E293B lighter card background for better contrast */
+    --card-foreground: 210 40% 98%;
+    --popover: 220 26% 14%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%; /* #3B82F6 blue from landing */
+    --primary-foreground: 222 84% 5%;
+    --secondary: 271 91% 65%; /* #8B5CF6 purple from landing */
+    --secondary-foreground: 222 84% 5%;
+    --muted: 220 22% 16%; /* #262D3D lighter sidebar for better visibility */
+    --muted-foreground: 215 20% 70%;
+    --accent: 220 24% 20%; /* #334155 lighter for better button contrast */
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%; /* #10B981 green adjusted for dark */
+    --success-foreground: 150 100% 90%;
+    --border: 215 16% 22%; /* #374151 lighter borders for better definition */
+    --input: 215 16% 22%;
+    --ring: 217 91% 60%;
   }
 }
 
@@ -140,4 +142,48 @@ html {
 ::selection {
   background: rgba(59, 130, 246, 0.3);
   color: white;
+}
+
+/* Dark mode enhancements inspired by landing page */
+.dark {
+  /* Gradient backgrounds for cards and components - updated for better contrast */
+  --gradient-card: linear-gradient(145deg, hsl(220 26% 14%) 0%, hsl(220 24% 18%) 100%);
+  --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(271 91% 65%) 100%);
+  --gradient-accent: linear-gradient(135deg, hsl(220 24% 20%) 0%, hsl(215 16% 22%) 100%);
+}
+
+/* Enhanced dark mode card styling */
+.dark .bg-card {
+  background: var(--gradient-card);
+}
+
+/* Subtle glow effects for interactive elements in dark mode */
+.dark button:hover,
+.dark [role="button"]:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+/* Enhanced scrollbar for dark mode */
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(271 91% 65%) 100%);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, hsl(217 91% 70%) 0%, hsl(271 91% 75%) 100%);
+}
+
+/* Ambient light effects for dark mode */
+@keyframes dark-glow {
+  0%, 100% { 
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.1), 
+                0 0 60px rgba(139, 92, 246, 0.05); 
+  }
+  50% { 
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.15), 
+                0 0 80px rgba(139, 92, 246, 0.1); 
+  }
+}
+
+.dark .animate-glow {
+  animation: dark-glow 4s ease-in-out infinite;
 }

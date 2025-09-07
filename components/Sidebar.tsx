@@ -8,11 +8,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MessageSquare, PanelLeftClose, PanelLeftOpen, Trash2, LogOut, ChevronUp } from "lucide-react";
+import { Plus, MessageSquare, PanelLeftClose, PanelLeftOpen, Trash2, LogOut, ChevronUp, Moon, Sun } from "lucide-react";
 import { SidebarProps } from "@/lib/types";
+import { useTheme } from "@/components/ThemeProvider";
 
 export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProject, onDeleteProject, onToggle, user, onLogout }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const toggleSidebar = () => {
     const newCollapsedState = !isCollapsed;
@@ -26,7 +28,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
     e.stopPropagation(); // Prevent project selection when clicking delete
     
     const confirmed = window.confirm(
-      `¿Estás seguro de que quieres eliminar el proyecto "${projectName}"?\n\nEsta acción no se puede deshacer.`
+      `Are you sure you want to delete the project "${projectName}"?\n\nThis action cannot be undone.`
     );
     
     if (confirmed && onDeleteProject) {
@@ -35,7 +37,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
   };
 
   const handleLogout = () => {
-    const confirmed = window.confirm("¿Estás seguro de que quieres cerrar sesión?");
+    const confirmed = window.confirm("Are you sure you want to log out?");
     if (confirmed && onLogout) {
       onLogout();
     }
@@ -44,7 +46,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
   const getUserDisplayName = () => {
     if (user?.name) return user.name;
     if (user?.email) return user.email.split('@')[0];
-    return 'Usuario';
+    return 'User';
   };
 
   const getAvatarFallback = () => {
@@ -54,13 +56,13 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
 
   return (
     <>
-      <div className={`${isCollapsed ? 'w-12' : 'w-64'} h-screen bg-[#F8F5F0] flex flex-col border-r transition-all duration-300 overflow-hidden relative`}>
+      <div className={`${isCollapsed ? 'w-12' : 'w-64'} h-screen bg-muted flex flex-col border-r border-border transition-all duration-300 overflow-hidden relative`}>
         {/* Resize handle - only visible when collapsed */}
         {isCollapsed && (
           <div 
             className="absolute top-0 -right-1 w-2 h-full cursor-col-resize hover:bg-primary/10 transition-colors duration-200 z-20"
             onClick={toggleSidebar}
-            title="Hacer clic para expandir"
+            title="Click to expand"
           />
         )}
         {/* App Header - Always visible with consistent logo position */}
@@ -71,7 +73,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
               <div 
                 className="relative w-8 h-8 group cursor-pointer"
                 onClick={toggleSidebar}
-                title="Expandir sidebar"
+                title="Expand sidebar"
               >
                 {/* Default app icon */}
                 <div className="absolute inset-0 flex items-center justify-center w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg shadow-sm transition-all duration-200 group-hover:opacity-0">
@@ -99,7 +101,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
                       size="sm"
                       variant="ghost"
                       className="ml-2 rounded-lg hover:bg-accent flex-shrink-0"
-                      title="Colapsar sidebar"
+                      title="Collapse sidebar"
                     >
                       <PanelLeftClose className="w-4 h-4" />
                     </Button>
@@ -118,10 +120,10 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
               ? 'w-8 h-8 p-0 bg-card border border-border hover:bg-accent text-foreground rounded-full shadow-sm flex items-center justify-center'
               : 'w-full justify-start gap-2 bg-card border border-border hover:bg-accent text-foreground text-sm py-2.5 rounded-full overflow-hidden transition-all duration-300 opacity-100 scale-100 translate-x-0'
             }`}
-            title={isCollapsed ? "Nuevo proyecto" : undefined}
+            title={isCollapsed ? "New project" : undefined}
           >
             <Plus className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span className="whitespace-nowrap">Nuevo proyecto</span>}
+            {!isCollapsed && <span className="whitespace-nowrap">New project</span>}
           </Button>
         </div>
         
@@ -151,7 +153,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
                     variant="ghost"
                     onClick={(e) => handleDeleteProject(project.id, project.name, e)}
                     className="w-8 h-8 p-0 rounded-full hover:bg-red-100 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all duration-200"
-                    title={`Eliminar proyecto "${project.name}"`}
+                    title={`Delete project "${project.name}"`}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -163,6 +165,41 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
 
         {/* Spacer for collapsed state */}
         {isCollapsed && <div className="flex-1" />}
+        
+        {/* Theme Toggle Section */}
+        <div className={`border-t border-border/50 py-3 ${isCollapsed ? 'flex justify-center' : 'px-3'}`}>
+          {isCollapsed ? (
+            /* Theme Toggle - Collapsed */
+            <Button
+              onClick={toggleTheme}
+              size="sm"
+              variant="ghost"
+              className="w-8 h-8 p-0 rounded-full hover:bg-accent transition-colors"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+            </Button>
+          ) : (
+            /* Theme Toggle - Expanded */
+            <Button
+              onClick={toggleTheme}
+              variant="ghost"
+              className="w-full justify-start gap-3 p-3 hover:bg-accent rounded-lg transition-colors text-sm"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+              <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+            </Button>
+          )}
+        </div>
         
         {/* User Profile Section */}
         <div className={`border-t border-border/50 py-3 ${isCollapsed ? 'flex justify-center' : 'px-3'}`}>
@@ -199,7 +236,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Cerrar sesión</span>
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -209,7 +246,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
               <DropdownMenuTrigger asChild>
                 <button 
                   className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition-colors cursor-pointer group w-full focus:outline-none focus:bg-accent"
-                  title="Abrir menú de usuario"
+                  title="Open user menu"
                 >
                   <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium flex-shrink-0">
                     {user?.avatar_url ? (
@@ -249,7 +286,7 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Cerrar sesión</span>
+                  <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

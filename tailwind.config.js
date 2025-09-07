@@ -53,6 +53,9 @@ module.exports = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      perspective: {
+        '2000': '2000px',
+      },
     },
   },
   plugins: [],

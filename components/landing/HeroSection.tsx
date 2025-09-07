@@ -77,6 +77,62 @@ export function HeroSection() {
             </div>
           </div>
 
+          {/* App Screenshot with 3D Perspective - Linear Style */}
+          <div className={`relative mt-24 transition-all duration-1500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`} style={{transitionDelay: '1000ms'}}>
+            <div className="relative mx-auto max-w-7xl px-4" style={{perspective: '1200px'}}>
+              <div className="relative app-mockup">
+                {/* Glow effects */}
+                <div className="absolute -inset-32 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-cyan-500/20 rounded-3xl blur-3xl opacity-60 animate-pulse"></div>
+                <div className="absolute -inset-16 bg-gradient-to-r from-blue-400/10 via-purple-400/10 to-cyan-400/10 rounded-2xl blur-xl opacity-80"></div>
+                
+                {/* Main screenshot container */}
+                <div className="relative transform-gpu transition-all duration-1000 hover:scale-[1.02]" style={{
+                  transform: 'translateX(15%) scale(1.5) rotateX(47deg) rotateY(31deg) rotate(324deg)',
+                  transformStyle: 'preserve-3d'
+                }}>
+                  <div className="relative rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-white/5 bg-gradient-to-br from-white/5 to-white/0 backdrop-blur-sm">
+                    {/* Glass effect overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50 z-10 pointer-events-none"></div>
+                    
+                    {/* Screenshot */}
+                    <img 
+                      src="/app-dark.png" 
+                      alt="Taskana AI Planner Interface" 
+                      className="w-full h-auto block"
+                    />
+                    
+                    {/* Bottom gradient overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-30 pointer-events-none"></div>
+                    
+                    {/* Right gradient overlay */}
+                    <div className="absolute top-0 bottom-0 right-0 w-1/3 bg-gradient-to-l from-black/80 via-black/40 to-transparent z-30 pointer-events-none"></div>
+                    
+                    {/* Subtle reflection */}
+                    <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/5 to-transparent z-20 pointer-events-none"></div>
+                  </div>
+                  
+                  {/* Reflection effect */}
+                  <div className="absolute top-full left-0 right-0 h-full opacity-8 -z-10" style={{
+                    transform: 'scaleY(-0.6) translateY(-20px) skewX(-5deg)',
+                    filter: 'blur(2px)',
+                    maskImage: 'linear-gradient(to bottom, rgba(0,0,0,0.4), transparent 50%)'
+                  }}>
+                    <img 
+                      src="/app-dark.png" 
+                      alt="" 
+                      className="w-full h-auto"
+                    />
+                  </div>
+                </div>
+                
+                {/* Ambient particles */}
+                <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-blue-400 rounded-full opacity-60 animate-ping" style={{animationDelay: '0s'}}></div>
+                <div className="absolute top-1/3 right-1/4 w-1 h-1 bg-purple-400 rounded-full opacity-40 animate-ping" style={{animationDelay: '2s'}}></div>
+                <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-cyan-400 rounded-full opacity-50 animate-ping" style={{animationDelay: '4s'}}></div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

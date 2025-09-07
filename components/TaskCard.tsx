@@ -60,24 +60,24 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success/10 text-success-foreground">Completado</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success/10 text-success-foreground">Completed</div>;
       case 'in_progress':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">En progreso</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">In Progress</div>;
       case 'blocked':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">Bloqueado</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary/20 text-secondary-foreground">Blocked</div>;
       default:
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">Listo</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">Ready</div>;
     }
   };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'high':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300">Alta</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300">High</div>;
       case 'medium':
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">Media</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">Medium</div>;
       default:
-        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">Baja</div>;
+        return <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-300">Low</div>;
     }
   };
 
@@ -106,12 +106,12 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
             {isExecuting ? (
               <div className="flex items-center justify-center gap-2 truncate">
                 <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
-                <span className="truncate">Iniciando...</span>
+                <span className="truncate">Starting...</span>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2 truncate">
                 <Code className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">Enviar a Editor</span>
+                <span className="truncate">Send to Editor</span>
               </div>
             )}
           </Button>
@@ -126,7 +126,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           >
             <div className="flex items-center justify-center gap-2 truncate">
               <Link className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">Esperando dependencias</span>
+              <span className="truncate">Waiting for dependencies</span>
             </div>
           </Button>
         );
@@ -141,12 +141,12 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
             {isExecuting ? (
               <div className="flex items-center justify-center gap-2 truncate">
                 <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
-                <span className="truncate">Continuando...</span>
+                <span className="truncate">Continuing...</span>
               </div>
             ) : (
               <div className="flex items-center justify-center gap-2 truncate">
                 <Code className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">Continuar</span>
+                <span className="truncate">Continue</span>
               </div>
             )}
           </Button>
@@ -161,7 +161,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           >
             <div className="flex items-center justify-center gap-2 truncate">
               <CheckCircle className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">Completado</span>
+              <span className="truncate">Completed</span>
             </div>
           </Button>
         );
@@ -172,8 +172,8 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
 
   if (variant === 'kanban') {
     return (
-      <Card className="bg-card border border-border rounded-xl p-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99] overflow-hidden min-h-[200px]">
-        <CardHeader className="pb-4" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
+      <Card className="bg-card border border-border rounded-xl p-0 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99] overflow-hidden" style={{ minHeight: '240px' }}>
+        <CardHeader className="pb-4 pt-4 px-4" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
           <div className="flex items-center justify-between mb-3 gap-2">
             <CardTitle className="text-base font-semibold text-foreground leading-tight truncate flex-1 min-w-0">
               {task.title}
@@ -187,7 +187,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
-              <span>{task.estimatedTime || '1 hora'}</span>
+              <span>{task.estimatedTime || '1 hour'}</span>
             </div>
             {task.dependencies && task.dependencies.length > 0 && (
               <div className="flex items-center gap-1">
@@ -198,7 +198,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           </div>
         </CardHeader>
         
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 pb-4 px-4">
           <p className="text-muted-foreground text-sm leading-relaxed mb-4 line-clamp-2 break-words">
             {task.description}
           </p>
@@ -207,7 +207,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           {task.status === 'in_progress' && task.progress !== undefined && (
             <div className="mb-4">
               <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                <span>Progreso</span>
+                <span>Progress</span>
                 <span>{task.progress}%</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
@@ -251,7 +251,7 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           {getStatusBadge(task.status)}
         </div>
         <div className="text-xs text-muted-foreground capitalize">
-          Prioridad: {task.priority}
+          Priority: {task.priority}
         </div>
       </CardHeader>
       <CardContent>
@@ -281,12 +281,12 @@ export function TaskCard({ task, onClick, onExecute, variant = 'default' }: Exte
           {isExecuting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Ejecutando...
+              Executing...
             </>
           ) : (
             <>
               <Code className="w-4 h-4 mr-2" />
-              Enviar a Editor
+              Send to Editor
             </>
           )}
         </Button>
