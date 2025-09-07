@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { BenefitsSection } from '@/components/landing/BenefitsSection';
 import { NavigationBar } from '@/components/landing/NavigationBar';
+import { Footer } from '@/components/landing/Footer';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -35,10 +36,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-black">
       <NavigationBar />
-      <HeroSection />
-      <BenefitsSection />
+      <div className="pt-20">
+        <HeroSection />
+        <BenefitsSection />
+        <Footer />
+      </div>
     </div>
   );
 }

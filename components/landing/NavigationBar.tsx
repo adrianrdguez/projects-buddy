@@ -1,26 +1,59 @@
 "use client";
 
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ArrowRight } from 'lucide-react';
 import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
+import { useState, useEffect } from 'react';
 
 export function NavigationBar() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <nav className="relative z-50 bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-lg' 
+        : 'bg-transparent'
+    }`}>
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
-        <div className="flex justify-between items-center py-6">
+        <div className={`flex justify-between items-center transition-all duration-300 ${
+          scrolled ? 'py-4' : 'py-6'
+        }`}>
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
-              <MessageSquare className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center w-8 h-8 bg-white rounded-lg">
+              <MessageSquare className="w-4 h-4 text-black" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">AI Planner</h1>
-              <p className="text-xs text-gray-300">Turn ideas into code</p>
-            </div>
+            <div className="text-xl font-semibold text-white">Projects Buddy</div>
+          </div>
+
+          {/* Navigation Menu */}
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#features" className="text-white/70 hover:text-white font-medium transition-colors duration-200">
+              Features
+            </a>
+            <a href="#pricing" className="text-white/70 hover:text-white font-medium transition-colors duration-200">
+              Pricing
+            </a>
+            <a href="#docs" className="text-white/70 hover:text-white font-medium transition-colors duration-200">
+              Docs
+            </a>
           </div>
 
           {/* Auth Button */}
-          <GoogleSignInButton size="sm" className="shadow-lg hover:shadow-xl transition-shadow" />
+          <div className="flex items-center gap-4">
+            <GoogleSignInButton 
+              size="sm" 
+              className="bg-white text-black hover:bg-gray-100 border-0 font-medium transition-all duration-200" 
+            />
+          </div>
         </div>
       </div>
     </nav>
