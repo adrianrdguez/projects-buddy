@@ -7,8 +7,13 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'AI Planner',
+  title: 'Taskana - AI Project Planner',
   description: 'The AI planner that turns ideas into executable code',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
