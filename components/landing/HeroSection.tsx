@@ -76,7 +76,7 @@ export function HeroSection() {
           </div>
 
           {/* App Screenshot with 3D Perspective - Linear Style */}
-          <div className={`relative mt-24 transition-all duration-1500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`} style={{transitionDelay: '1000ms'}}>
+          <div className={`relative mt-24 ${isVisible ? 'animate-slide-in-from-top-left' : 'opacity-0 -translate-y-32 -translate-x-32'}`}>
             <div className="relative mx-auto max-w-7xl px-4" style={{perspective: '1200px'}}>
               <div className="relative app-mockup">
                 {/* Glow effects */}
@@ -143,6 +143,21 @@ export function HeroSection() {
         .animate-gradient {
           background-size: 200% 200%;
           animation: gradient 3s ease-in-out infinite;
+        }
+
+        @keyframes slide-in-from-top-left {
+          0% {
+            opacity: 0;
+            transform: translateY(-8rem) translateX(-8rem);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) translateX(0);
+          }
+        }
+
+        .animate-slide-in-from-top-left {
+          animation: slide-in-from-top-left 4s ease-out 1.5s both;
         }
       `}</style>
     </section>
