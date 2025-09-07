@@ -21,19 +21,17 @@ export function HeroSection() {
       </div>
 
       <div className="relative max-w-7xl mx-auto">
-        <div className="text-center">
+        <div className="text-left">
           {/* Badge */}
-          <div className={`inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full text-sm text-white/80 mb-8 transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <div className={`inline-flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full text-sm text-white/80 mb-8 w-fit transition-all duration-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
             The AI planner that turns ideas into executable code
           </div>
 
           {/* Main heading */}
           <div className="relative">
-            <h1 className={`text-5xl sm:text-7xl lg:text-8xl font-bold text-white mb-8 leading-[0.9] tracking-tight transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '200ms'}}>
-              Build ideas into
-              <br />
-              <span className="relative inline-block">
+            <h1 className={`text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-8 leading-[0.9] tracking-tight transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '200ms'}}>
+              Build ideas into <span className="relative inline-block">
                 <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
                   reality
                 </span>
@@ -43,18 +41,18 @@ export function HeroSection() {
           </div>
 
           {/* Subtitle */}
-          <p className={`text-xl sm:text-2xl text-gray-400 mb-16 max-w-3xl mx-auto leading-relaxed font-light transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '400ms'}}>
+          <p className={`text-xl sm:text-2xl text-gray-400 mb-16 max-w-3xl leading-relaxed font-light transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '400ms'}}>
             Transform natural language into structured development tasks. 
             <span className="text-white/80">AI breaks down complexity, you build with clarity.</span>
           </p>
 
           {/* CTA Buttons */}
-          <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '600ms'}}>
+          <div className={`flex flex-col sm:flex-row items-start gap-4 mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '600ms'}}>
             <GoogleSignInButton 
               size="lg" 
-              className="text-base px-8 py-4 bg-white text-black hover:bg-gray-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-lg font-medium" 
+              className="text-base px-8 py-4 bg-white text-black hover:bg-gray-100 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-lg font-medium h-[52px]" 
             />
-            <button className="group inline-flex items-center gap-2 px-8 py-4 text-white/80 hover:text-white font-medium transition-all duration-300 rounded-lg border border-white/20 hover:border-white/40 hover:bg-white/5">
+            <button className="group inline-flex items-center gap-2 px-8 py-4 text-white/80 hover:text-white font-medium transition-all duration-300 rounded-lg border border-white/20 hover:border-white/40 hover:bg-white/5 h-[52px]">
               <Play className="w-5 h-5" />
               Watch demo
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
@@ -62,16 +60,16 @@ export function HeroSection() {
           </div>
 
           {/* Stats */}
-          <div className={`flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12 text-sm text-gray-500 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '800ms'}}>
-            <div className="text-center">
+          <div className={`flex flex-col sm:flex-row items-start gap-8 sm:gap-12 text-sm text-gray-500 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{transitionDelay: '800ms'}}>
+            <div>
               <div className="text-2xl font-bold text-white mb-1">10k+</div>
               <div>Projects created</div>
             </div>
-            <div className="text-center">
+            <div>
               <div className="text-2xl font-bold text-white mb-1">50k+</div>
               <div>Tasks generated</div>
             </div>
-            <div className="text-center">
+            <div>
               <div className="text-2xl font-bold text-white mb-1">99.9%</div>
               <div>Uptime</div>
             </div>
