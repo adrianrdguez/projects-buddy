@@ -76,7 +76,7 @@ export function HeroSection() {
           </div>
 
           {/* App Screenshot with 3D Perspective - Linear Style */}
-          <div className={`relative mt-24 ${isVisible ? 'animate-slide-in-from-top-left' : 'opacity-0 -translate-y-32 -translate-x-32'}`}>
+          <div className={`relative mt-8 ${isVisible ? 'animate-slide-in-from-top-left' : 'opacity-0 -translate-y-32 -translate-x-32'}`}>
             <div className="relative mx-auto max-w-7xl px-4" style={{perspective: '1200px'}}>
               <div className="relative app-mockup">
                 {/* Glow effects */}
