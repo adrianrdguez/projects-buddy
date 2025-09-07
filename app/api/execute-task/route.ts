@@ -46,11 +46,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExecuteTa
 
     const { task, project } = taskData;
 
-    // Generate optimized prompt for the task
-    const optimizedPrompt = generatePromptForTask(task, project);
+    // Use the pre-generated prompt if available, otherwise generate one
+    const prompt = task.generatedPrompt || generatePromptForTask(task, project);
     
     // Call external Claude Code server with project context
-    const executionResult = await executeWithClaudeCode(optimizedPrompt, project.projectPath);
+    const executionResult = await executeWithClaudeCode(prompt, project.projectPath, task.targetFile);
     
     return NextResponse.json({
       success: true,
@@ -192,102 +192,130 @@ Additional requirements for authentication:
   return basePrompt;
 }
 
-async function executeWithClaudeCode(prompt: string, projectPath?: string): Promise<{status: string, filePath?: string}> {
+async function executeWithClaudeCode(prompt: string, projectPath?: string, targetFile?: string): Promise<{status: string, filePath?: string}> {
   console.log('executeWithClaudeCode called with:', { projectPath, hasPrompt: !!prompt });
   
   try {
-    // If we have a project path, open Cursor in that directory
+    const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
+    
+    // If we have a project path, use your Claude Code server
     if (projectPath && projectPath.trim() !== '') {
-      console.log('Opening Cursor with project path:', projectPath);
+      console.log('Using Claude Code server to open Cursor and send prompt');
       
-      const { spawn } = require('child_process');
-      
-      // Open Cursor with the project directory
-      const cursorProcess = spawn('cursor', [projectPath.trim()], {
-        detached: false,
-        stdio: ['ignore', 'pipe', 'pipe']
-      });
-      
-      // Listen for process events for debugging
-      cursorProcess.on('error', (error: any) => {
-        console.error('Failed to start Cursor:', error);
-      });
-      
-      cursorProcess.on('close', (code: number) => {
-        console.log(`Cursor process exited with code ${code}`);
-      });
-      
-      // Don't wait for Cursor to close, but give it a moment to start
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Cursor should now be opening...');
-      
-      // Try to send the prompt to Claude Code server (optional)
       try {
-        const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
-        console.log('Attempting to contact Claude Code server...');
+        // First check if Claude Code server is available
+        const healthResponse = await fetch(`${CLAUDE_CODE_SERVER_URL}/health`, {
+          signal: AbortSignal.timeout(3000)
+        });
         
-        const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {
+        if (!healthResponse.ok) {
+          throw new Error('Claude Code server not responding');
+        }
+        
+        console.log('✅ Claude Code server is available');
+        
+        // Use your working /send-to-claude-code endpoint
+        const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/send-to-claude-code`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             prompt: prompt,
-            language: 'typescript',
-            framework: 'nextjs',
-            projectPath: projectPath
+            projectPath: projectPath.trim(),
+            projectName: 'MindMap Project',
+            targetFile: targetFile || null // Use specified target file or let Claude Code decide
           }),
-          signal: AbortSignal.timeout(5000) // Reduced timeout
+          signal: AbortSignal.timeout(30000)
         });
         
         if (response.ok) {
           const result = await response.json();
-          console.log('Claude Code server responded successfully');
+          console.log('✅ Claude Code server responded:', result.message);
+          
           return {
             status: result.success ? 'completed' : 'in_progress',
-            filePath: result.filePath || projectPath
+            filePath: result.workingDirectory || projectPath
           };
         } else {
-          console.log('Claude Code server responded with error:', response.status);
+          console.log('❌ Claude Code server error:', response.status, response.statusText);
+          const errorData = await response.json().catch(() => null);
+          throw new Error(`Claude Code server error: ${errorData?.message || response.statusText}`);
         }
+        
       } catch (claudeError) {
-        console.log('Claude Code server not available:', claudeError);
+        console.log('❌ Claude Code server error:', claudeError);
+        
+        // Fallback: just open Cursor without Claude Code
+        console.log('📁 Fallback: Opening Cursor only...');
+        const { spawn } = require('child_process');
+        const fs = require('fs');
+        const path = require('path');
+        
+        // Validate path exists
+        if (!fs.existsSync(projectPath)) {
+          throw new Error(`Directory does not exist: ${projectPath}`);
+        }
+        
+        // Open Cursor
+        const absolutePath = path.resolve(projectPath.trim());
+        const cursorProcess = spawn('cursor', [absolutePath], {
+          detached: true,
+          stdio: 'ignore',
+          cwd: absolutePath
+        });
+        
+        cursorProcess.unref();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        return {
+          status: 'in_progress',
+          filePath: projectPath
+        };
       }
-      
-      // Return success even if Claude Code server is not available
-      console.log('Returning success - Cursor opened, Claude Code server optional');
-      return {
-        status: 'in_progress',
-        filePath: projectPath
-      };
     } else {
-      console.log('No project path provided, trying Claude Code server only');
-      // Fallback: try to use Claude Code server without project path
-      const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
-      const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          language: 'typescript',
-          framework: 'nextjs'
-        }),
-        signal: AbortSignal.timeout(30000)
-      });
+      console.log('No project path provided, using Claude Code server general execution');
       
-      if (!response.ok) {
-        throw new Error(`Claude Code server responded with ${response.status}: ${response.statusText}`);
+      try {
+        // Check if Claude Code server is available
+        const healthResponse = await fetch(`${CLAUDE_CODE_SERVER_URL}/health`, {
+          signal: AbortSignal.timeout(3000)
+        });
+        
+        if (!healthResponse.ok) {
+          throw new Error('Claude Code server not responding');
+        }
+        
+        // Use general execution without specific project path
+        const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/send-to-claude-code`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: prompt,
+            projectPath: null,
+            projectName: 'Generated Code',
+            targetFile: targetFile || null
+          }),
+          signal: AbortSignal.timeout(30000)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Claude Code server responded with ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        return {
+          status: result.success ? 'completed' : 'in_progress',
+          filePath: result.workingDirectory
+        };
+        
+      } catch (serverError) {
+        console.log('❌ Claude Code server not available for general execution');
+        throw new Error('Claude Code server is not available');
       }
-      
-      const result = await response.json();
-      
-      return {
-        status: result.success ? 'completed' : 'failed',
-        filePath: result.filePath
-      };
     }
     
   } catch (error) {
@@ -298,7 +326,7 @@ async function executeWithClaudeCode(prompt: string, projectPath?: string): Prom
         throw new Error('Claude Code server execution timeout');
       }
       if (error.message.includes('fetch')) {
-        throw new Error('Claude Code server is not available, but Cursor may have opened');
+        throw new Error('Claude Code server is not available');
       }
     }
     

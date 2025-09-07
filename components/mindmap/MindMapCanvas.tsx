@@ -27,6 +27,7 @@ interface MindMapCanvasProps {
   onConfigureProject?: () => void;
   onStartExecution?: () => void;
   isLoading?: boolean;
+  executionState?: 'idle' | 'loading' | 'completed' | 'error';
 }
 
 export function MindMapCanvas({ 
@@ -37,7 +38,8 @@ export function MindMapCanvas({
   onProjectNameChange,
   onConfigureProject,
   onStartExecution,
-  isLoading = false 
+  isLoading = false,
+  executionState = 'idle'
 }: MindMapCanvasProps) {
   const [mindMapData, setMindMapData] = useState<MindMapData | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 1400, height: 1200 });
@@ -49,6 +51,9 @@ export function MindMapCanvas({
   const [animatedConnections, setAnimatedConnections] = useState<string[]>([]);
   const [processingConnections, setProcessingConnections] = useState<string[]>([]);
   const [processingCards, setProcessingCards] = useState<string[]>([]);
+  const [executionProgress, setExecutionProgress] = useState(0);
+  const [estimatedTime, setEstimatedTime] = useState(0);
+  const [startTime, setStartTime] = useState<Date | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +65,66 @@ export function MindMapCanvas({
   useEffect(() => {
     setEditNameValue(projectName);
   }, [projectName]);
+
+  // Progress tracking effect
+  useEffect(() => {
+    if (executionState === 'loading' && !startTime) {
+      setStartTime(new Date());
+      setEstimatedTime(60); // More realistic 60 seconds for Claude Code execution
+      setExecutionProgress(0);
+    }
+    
+    if (executionState === 'loading' && startTime) {
+      const interval = setInterval(() => {
+        const now = new Date();
+        const elapsed = (now.getTime() - startTime.getTime()) / 1000;
+        
+        // Dynamic progress calculation - slower at start, faster at end
+        let progress;
+        if (elapsed < 30) {
+          // First 30 seconds: slow progress (0-50%)
+          progress = (elapsed / 30) * 50;
+        } else {
+          // After 30 seconds: faster progress (50-95%)
+          const remaining = elapsed - 30;
+          progress = 50 + Math.min((remaining / 60) * 45, 45); // Max 95% until actual completion
+        }
+        
+        const remaining = Math.max(60 - elapsed, 5); // Minimum 5 seconds remaining
+        
+        setExecutionProgress(Math.min(progress, 95));
+        setEstimatedTime(remaining);
+      }, 500);
+      
+      return () => clearInterval(interval);
+    }
+    
+    if (executionState === 'completed') {
+      setExecutionProgress(100);
+      setEstimatedTime(0);
+      // Stop animation when execution completes
+      setIsExecutionAnimating(false);
+      setAnimatedConnections([]);
+      setProcessingConnections([]);
+      setProcessingCards([]);
+      
+      // Reset after showing completed state for 3 seconds
+      const timeout = setTimeout(() => {
+        setStartTime(null);
+        setExecutionProgress(0);
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+    
+    if (executionState === 'error') {
+      setEstimatedTime(0);
+      setStartTime(null);
+      setIsExecutionAnimating(false);
+      setAnimatedConnections([]);
+      setProcessingConnections([]);
+      setProcessingCards([]);
+    }
+  }, [executionState, startTime]);
 
   const handleStartEdit = () => {
     setIsEditingName(true);
@@ -239,6 +304,17 @@ export function MindMapCanvas({
                 const updatedData = toggleChildrenVisibility(currentData, taskCard.parentId);
                 setMindMapData(updatedData);
                 mindMapDataRef.current = updatedData;
+                
+                // Auto-execute the first task when its subtask expands
+                if (index === 0 && onTaskExecute) {
+                  const firstTask = tasks.find(t => t.id === taskId);
+                  if (firstTask) {
+                    console.log('🚀 Auto-executing first task:', firstTask.title);
+                    setTimeout(() => {
+                      onTaskExecute(firstTask);
+                    }, 1000); // Small delay to let expansion animation complete
+                  }
+                }
               }
             }
           }
@@ -249,15 +325,7 @@ export function MindMapCanvas({
           }
         }, 3000); // Wait for 3 trips to complete
         
-        // Reset all processing states after 7 seconds of glow effect
-        if (index === connectionIds.length - 1) {
-          setTimeout(() => {
-            setIsExecutionAnimating(false);
-            setAnimatedConnections([]);
-            setProcessingConnections([]);
-            setProcessingCards([]);
-          }, 10000); // 3s for particles + 7s for glow effect
-        }
+        // Animation will continue until execution completes - handled by executionState effect
       }, delay);
       delay += index === 0 ? 4000 : 4000; // 4 seconds between each connection phase
     });
@@ -342,6 +410,9 @@ export function MindMapCanvas({
             onClick={handleCardClick}
             onStartExecution={handleStartExecution}
             onConfigureProject={onConfigureProject}
+            executionState={executionState}
+            executionProgress={executionProgress}
+            estimatedTime={estimatedTime}
           />
         );
       case 'branch':

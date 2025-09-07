@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [projectPathDialogOpen, setProjectPathDialogOpen] = useState(false);
   const [isUpdatingProjectPath, setIsUpdatingProjectPath] = useState(false);
+  const [executionState, setExecutionState] = useState<'idle' | 'loading' | 'completed' | 'error'>('idle');
 
   // Protect route - redirect to login if not authenticated
   useEffect(() => {
@@ -388,6 +389,9 @@ export default function Dashboard() {
     }
 
     try {
+      setExecutionState('loading');
+      setError(null);
+      
       // Create a comprehensive prompt for the project
       const projectPrompt = `
 Proyecto: ${activeProject.name}
@@ -413,13 +417,54 @@ Empezaremos con la primera tarea: ${tasks[0]?.title || 'Configurar proyecto'}
       const data = await response.json();
       
       if (data.success) {
-        setError(null);
+        // Start polling to check if Claude Code completed
+        startPollingClaudeCodeStatus();
       } else {
+        setExecutionState('error');
         setError(data.error || 'Failed to start project execution');
       }
     } catch (err) {
+      setExecutionState('error');
       setError('Network error: Could not start project execution');
     }
+  };
+
+  // Poll Claude Code server to check completion status
+  const startPollingClaudeCodeStatus = () => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:3002/execution-status');
+        if (response.ok) {
+          const status = await response.json();
+          console.log('Execution status:', status);
+          
+          if (!status.isRunning && status.completedTime) {
+            // Execution completed!
+            console.log('✅ Claude Code execution completed');
+            clearInterval(pollInterval);
+            setExecutionState('completed');
+          } else if (!status.isRunning && !status.completedTime && status.startTime) {
+            // Execution failed
+            console.log('❌ Claude Code execution failed');
+            clearInterval(pollInterval);
+            setExecutionState('error');
+          }
+          // If status.isRunning is true, continue polling
+        }
+      } catch (error) {
+        // Server might be down, continue polling
+        console.log('Polling Claude Code server...');
+      }
+    }, 1000); // Poll every 1 second for faster response
+
+    // Stop polling after 5 minutes max (longer timeout for complex tasks)
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      if (executionState === 'loading') {
+        console.log('⏰ Polling timeout - assuming completed');
+        setExecutionState('completed');
+      }
+    }, 300000); // 5 minutes max
   };
 
   // Show loading only on initial load, not when switching tabs
@@ -481,6 +526,7 @@ Empezaremos con la primera tarea: ${tasks[0]?.title || 'Configurar proyecto'}
           onConfigureProject={handleConfigureProject}
           onStartExecution={handleStartExecution}
           isLoading={isLoadingTasks}
+          executionState={executionState}
         />
 
       </div>

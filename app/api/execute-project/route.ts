@@ -68,8 +68,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExecutePr
       );
     }
 
-    // Open Cursor with the project directory
-    const executionResult = await openCursorWithProject(body.projectPath, body.prompt);
+    // Open Cursor with the project directory (no prompt execution)
+    const executionResult = await openCursorWithProject(body.projectPath);
     
     return NextResponse.json({
       success: true,
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExecutePr
   }
 }
 
-async function openCursorWithProject(projectPath: string, prompt: string): Promise<{status: string, filePath?: string}> {
+async function openCursorWithProject(projectPath: string): Promise<{status: string, filePath?: string}> {
   console.log('Opening Cursor with project path:', projectPath);
   
   try {
@@ -127,42 +127,7 @@ async function openCursorWithProject(projectPath: string, prompt: string): Promi
     // Give Cursor a moment to start
     await new Promise(resolve => setTimeout(resolve, 2000));
     
-    console.log('Cursor opened successfully for project');
-    
-    // Try to send the prompt to Claude Code server (optional)
-    try {
-      const CLAUDE_CODE_SERVER_URL = 'http://localhost:3002';
-      console.log('Attempting to contact Claude Code server...');
-      
-      const response = await fetch(`${CLAUDE_CODE_SERVER_URL}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          language: 'typescript',
-          framework: 'nextjs',
-          projectPath: projectPath
-        }),
-        signal: AbortSignal.timeout(5000)
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Claude Code server responded successfully');
-        return {
-          status: result.success ? 'completed' : 'in_progress',
-          filePath: result.filePath || projectPath
-        };
-      } else {
-        console.log('Claude Code server responded with error:', response.status);
-      }
-    } catch (claudeError) {
-      console.log('Claude Code server not available:', claudeError);
-    }
-    
-    // Return success even if Claude Code server is not available
+    console.log('✅ Cursor opened successfully for project - ready for task execution');
     return {
       status: 'in_progress',
       filePath: projectPath
