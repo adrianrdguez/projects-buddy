@@ -7,6 +7,7 @@ interface UpdateProjectRequest {
   description?: string;
   tech_stack?: string[];
   status?: 'active' | 'completed' | 'archived';
+  projectPath?: string;
 }
 
 interface ProjectResponse {
@@ -51,7 +52,7 @@ export async function PATCH(
     const body: UpdateProjectRequest = await request.json();
     
     // Validate that there's something to update
-    if (!body.name && !body.description && !body.tech_stack && !body.status) {
+    if (!body.name && !body.description && !body.tech_stack && !body.status && body.projectPath === undefined) {
       return NextResponse.json(
         {
           success: false,
@@ -84,6 +85,19 @@ export async function PATCH(
       }
     }
 
+    // Validate projectPath if provided
+    if (body.projectPath !== undefined) {
+      if (body.projectPath !== null && body.projectPath.length > 500) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Project path must be less than 500 characters'
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // First verify that the project belongs to the authenticated user
     const { data: existingProject, error: projectError } = await userSupabase
       .from('projects')
@@ -108,6 +122,7 @@ export async function PATCH(
     if (body.description !== undefined) updateData.description = body.description?.trim() || null;
     if (body.tech_stack !== undefined) updateData.tech_stack = body.tech_stack;
     if (body.status !== undefined) updateData.status = body.status;
+    if (body.projectPath !== undefined) updateData.project_path = body.projectPath?.trim() || null;
 
     // Update project in Supabase
     const { data, error } = await userSupabase
@@ -137,6 +152,7 @@ export async function PATCH(
       description: data.description || '',
       tech_stack: data.tech_stack || [],
       status: data.status,
+      projectPath: data.project_path || undefined,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at)
     };

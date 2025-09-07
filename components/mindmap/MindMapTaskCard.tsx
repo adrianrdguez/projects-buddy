@@ -9,9 +9,10 @@ interface MindMapTaskCardProps {
   card: MindMapCard;
   onClick?: (card: MindMapCard) => void;
   onExecute?: (card: MindMapCard) => void;
+  isProcessing?: boolean;
 }
 
-export function MindMapTaskCard({ card, onClick, onExecute }: MindMapTaskCardProps) {
+export function MindMapTaskCard({ card, onClick, onExecute, isProcessing = false }: MindMapTaskCardProps) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<string | null>(null);
   const [executionError, setExecutionError] = useState<string | null>(null);
@@ -88,18 +89,18 @@ export function MindMapTaskCard({ card, onClick, onExecute }: MindMapTaskCardPro
   const getActionButton = () => {
     if (card.status === 'completed') {
       return (
-        <div className="flex items-center gap-1 text-xs text-success">
-          <CheckCircle className="w-3 h-3" />
-          <span>Completado</span>
+        <div className="flex items-center gap-1 text-xs text-success min-w-0">
+          <CheckCircle className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">Completado</span>
         </div>
       );
     }
 
     if (card.status === 'blocked') {
       return (
-        <div className="flex items-center gap-1 text-xs text-secondary">
-          <Link className="w-3 h-3" />
-          <span>Bloqueado</span>
+        <div className="flex items-center gap-1 text-xs text-secondary min-w-0">
+          <Link className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">Bloqueado</span>
         </div>
       );
     }
@@ -109,18 +110,18 @@ export function MindMapTaskCard({ card, onClick, onExecute }: MindMapTaskCardPro
         onClick={handleExecuteTask}
         disabled={isExecuting}
         size="sm"
-        className="h-6 text-xs px-2 bg-primary/80 hover:bg-primary text-primary-foreground"
+        className="h-8 text-sm px-3 bg-primary/80 hover:bg-primary text-primary-foreground min-w-0 overflow-hidden"
       >
         {isExecuting ? (
-          <>
-            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-            Ejecutando
-          </>
+          <div className="flex items-center gap-1 min-w-0">
+            <Loader2 className="w-3 h-3 animate-spin flex-shrink-0" />
+            <span className="truncate">Ejecutando</span>
+          </div>
         ) : (
-          <>
-            <Code className="w-3 h-3 mr-1" />
-            Enviar
-          </>
+          <div className="flex items-center gap-1 min-w-0">
+            <Code className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">Enviar</span>
+          </div>
         )}
       </Button>
     );
@@ -128,49 +129,55 @@ export function MindMapTaskCard({ card, onClick, onExecute }: MindMapTaskCardPro
 
   return (
     <Card 
-      className={`${getStatusColor(card.status)} rounded-lg shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 hover:border-primary/40`}
+      className={`${getStatusColor(card.status)} rounded-lg shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:scale-105 hover:border-primary/40 overflow-hidden ${
+        isProcessing ? 'animate-pulse shadow-lg' : ''
+      }`}
       style={{
         position: 'absolute',
         left: card.position.x - card.size.width / 2,
         top: card.position.y - card.size.height / 2,
         width: card.size.width,
         height: card.size.height,
+        boxShadow: isProcessing ? '0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3)' : undefined,
+        border: isProcessing ? '2px solid #10b981' : undefined,
       }}
       onClick={handleCardClick}
     >
-      <CardHeader className="pb-2 px-3 pt-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-sm font-medium text-foreground leading-tight flex-1">
+      <CardHeader className="pb-3 px-4 pt-4">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-sm font-medium text-foreground leading-tight flex-1 min-w-0 truncate">
             {card.title}
           </CardTitle>
-          <div className="ml-2">
+          <div className="flex-shrink-0">
             {getStatusIcon(card.status)}
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="px-3 pb-3">
-        <p className="text-muted-foreground text-xs leading-relaxed mb-2 line-clamp-2">
+      <CardContent className="px-4 pb-4">
+        <p className="text-muted-foreground text-sm leading-relaxed mb-3 line-clamp-2 break-words">
           {card.description}
         </p>
         
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
             {card.estimatedTime && (
               <div className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                <span>{card.estimatedTime}</span>
+                <Clock className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{card.estimatedTime}</span>
               </div>
             )}
             {card.dependencies && card.dependencies.length > 0 && (
               <div className="flex items-center gap-1">
-                <Link className="w-3 h-3" />
-                <span>{card.dependencies.length}</span>
+                <Link className="w-4 h-4" />
+                <span>{card.dependencies.length} dep.</span>
               </div>
             )}
           </div>
           
-          {getActionButton()}
+          <div className="flex justify-center">
+            {getActionButton()}
+          </div>
         </div>
 
         {/* Progress bar for in-progress tasks */}
@@ -187,16 +194,16 @@ export function MindMapTaskCard({ card, onClick, onExecute }: MindMapTaskCardPro
         
         {/* Execution feedback */}
         {executionResult && (
-          <div className="flex items-center gap-1 mt-2 p-1 bg-success/10 border border-success/20 rounded text-xs">
+          <div className="flex items-center gap-1 mt-2 p-1 bg-success/10 border border-success/20 rounded text-xs overflow-hidden">
             <CheckCircle className="w-3 h-3 text-success flex-shrink-0" />
-            <p className="text-success truncate">{executionResult}</p>
+            <p className="text-success truncate flex-1 min-w-0">{executionResult}</p>
           </div>
         )}
         
         {executionError && (
-          <div className="flex items-center gap-1 mt-2 p-1 bg-destructive/10 border border-destructive/20 rounded text-xs">
+          <div className="flex items-center gap-1 mt-2 p-1 bg-destructive/10 border border-destructive/20 rounded text-xs overflow-hidden">
             <AlertCircle className="w-3 h-3 text-destructive flex-shrink-0" />
-            <p className="text-destructive truncate">{executionError}</p>
+            <p className="text-destructive truncate flex-1 min-w-0">{executionError}</p>
           </div>
         )}
       </CardContent>

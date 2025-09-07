@@ -14,6 +14,36 @@ function generateTaskIds(count: number): string[] {
   return Array.from({ length: count }, () => generateTaskId());
 }
 
+// Generate enhanced prompt for Claude Code execution
+function generateEnhancedPrompt(task: any, projectInput: string): string {
+  const basePrompt = task.aiPrompt || task.description;
+  
+  const enhancedPrompt = `Project Context: ${projectInput}
+
+Task: ${task.title}
+Description: ${task.description}
+
+Technical Requirements:
+${basePrompt}
+
+Additional Guidelines:
+- Use TypeScript with proper type definitions
+- Follow modern React/Next.js patterns and best practices
+- Include proper error handling and loading states
+- Add appropriate comments for complex logic
+- Ensure responsive design if UI-related
+- Follow security best practices
+- Use Tailwind CSS for styling when applicable
+- Export components as default when creating React components
+- Include proper imports and dependencies
+
+Expected Output: Complete, production-ready code that accomplishes this task.
+
+${task.targetFile ? `Target File: ${task.targetFile}` : ''}`;
+
+  return enhancedPrompt;
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse<GenerateTasksResponse | ApiError>> {
   try {
     // Get the authenticated user and supabase client
@@ -156,7 +186,9 @@ async function generateTasksWithOpenAI(input: string, projectId: string): Promis
       "description": "Detailed description of what needs to be done",
       "priority": "high|medium|low",
       "dependencies": [0, 1], // Array of task indices this depends on (empty array if no dependencies)
-      "estimatedTime": "X hours" // Format: "X hours" or "X days"
+      "estimatedTime": "X hours", // Format: "X hours" or "X days"
+      "aiPrompt": "Direct prompt for Claude Code to execute this task",
+      "targetFile": "path/to/target/file.tsx" // Optional: specific file to create/modify
     }
   ]
 }`
@@ -164,12 +196,20 @@ async function generateTasksWithOpenAI(input: string, projectId: string): Promis
     const userMessage = `Break down this project into development tasks: "${input}"
 
     Example for "simple calculator app":
-    - Setup Next.js project (15 minutes)
-    - Create calculator component (30 minutes)  
-    - Add styling (15 minutes)
-    - Test functionality (15 minutes)
+    {
+      "title": "Setup Next.js Project",
+      "description": "Initialize a new Next.js project and configure necessary settings",
+      "aiPrompt": "Create a new Next.js 14+ project with TypeScript, Tailwind CSS, and essential configurations. Set up the project structure with proper routing and build configuration.",
+      "targetFile": "package.json"
+    },
+    {
+      "title": "Create Calculator Component", 
+      "description": "Build the main calculator interface with buttons and display",
+      "aiPrompt": "Create a fully functional calculator React component with TypeScript. Include: number input buttons (0-9), operation buttons (+, -, *, /), equals button, clear button, decimal point, and a display screen. Use modern React hooks (useState, useCallback) and include proper TypeScript interfaces. Style with Tailwind CSS for a modern, responsive design.",
+      "targetFile": "components/Calculator.tsx"
+    }
     
-    Generate similar realistic tasks with AI-assisted development in mind.`;
+    IMPORTANT: Each aiPrompt should be a complete, actionable instruction that Claude Code can execute to create working code. Include specific technical requirements, styling guidelines, and functionality details.`;
 
 
     const completion = await openai.chat.completions.create({
@@ -197,6 +237,8 @@ async function generateTasksWithOpenAI(input: string, projectId: string): Promis
         priority: 'low' | 'medium' | 'high';
         dependencies: number[];
         estimatedTime: string;
+        aiPrompt?: string;
+        targetFile?: string;
       }>;
     };
 
@@ -231,6 +273,9 @@ async function generateTasksWithOpenAI(input: string, projectId: string): Promis
         return depIndex < taskIds.length ? taskIds[depIndex] : generateTaskId();
       });
       
+      // Generate enhanced prompt for Claude Code
+      const generatedPrompt = generateEnhancedPrompt(task, input);
+      
       const convertedTask = {
         id: taskIds[index],
         title: task.title || `Task ${index + 1}`, // Fallback title
@@ -239,11 +284,13 @@ async function generateTasksWithOpenAI(input: string, projectId: string): Promis
         priority: task.priority || 'medium' as const, // Fallback priority
         dependencies,
         estimatedTime: task.estimatedTime || '1 hour', // Fallback time
+        ai_prompt: task.aiPrompt || task.description, // Use aiPrompt or fallback to description
+        generated_prompt: generatedPrompt,
+        target_file: task.targetFile || undefined,
         project_id: projectId,
         createdAt: currentTime,
         updatedAt: currentTime
       };
-
 
       return convertedTask;
     });
@@ -275,6 +322,14 @@ async function generateTasksFromTemplate(input: string, projectId: string): Prom
       return depIndex < taskIds.length ? taskIds[depIndex] : generateTaskId();
     }) || [];
 
+    // Generate AI prompt and enhanced prompt for fallback tasks
+    const aiPrompt = `Implement: ${template.description}`;
+    const generatedPrompt = generateEnhancedPrompt({
+      title: template.title,
+      description: template.description,
+      aiPrompt: aiPrompt
+    }, input);
+
     return {
       id: taskIds[index],
       title: template.title,
@@ -283,6 +338,9 @@ async function generateTasksFromTemplate(input: string, projectId: string): Prom
       priority: template.priority,
       dependencies,
       estimatedTime: template.estimatedTime,
+      ai_prompt: aiPrompt,
+      generated_prompt: generatedPrompt,
+      target_file: undefined,
       project_id: projectId,
       createdAt: currentTime,
       updatedAt: currentTime

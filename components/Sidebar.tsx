@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, MessageSquare, Sun, Moon, PanelLeftClose, PanelLeftOpen, Trash2 } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, MessageSquare, PanelLeftClose, PanelLeftOpen, Trash2, LogOut, ChevronUp } from "lucide-react";
 import { SidebarProps } from "@/lib/types";
-import { useTheme } from "@/components/ThemeProvider";
 
-export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProject, onDeleteProject, onToggle }: SidebarProps) {
-  const { theme, toggleTheme } = useTheme();
+export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProject, onDeleteProject, onToggle, user, onLogout }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleSidebar = () => {
@@ -26,6 +32,24 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
     if (confirmed && onDeleteProject) {
       onDeleteProject(projectId);
     }
+  };
+
+  const handleLogout = () => {
+    const confirmed = window.confirm("¿Estás seguro de que quieres cerrar sesión?");
+    if (confirmed && onLogout) {
+      onLogout();
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.name) return user.name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'Usuario';
+  };
+
+  const getAvatarFallback = () => {
+    const displayName = getUserDisplayName();
+    return displayName.charAt(0).toUpperCase();
   };
 
   return (
@@ -140,47 +164,95 @@ export function Sidebar({ projects, activeProjectId, onProjectSelect, onNewProje
         {/* Spacer for collapsed state */}
         {isCollapsed && <div className="flex-1" />}
         
-        {/* Settings Section */}
-        <div className={`border-t border-border/50 py-3 ${isCollapsed ? 'flex flex-col items-center gap-2' : 'px-3'}`}>
+        {/* User Profile Section */}
+        <div className={`border-t border-border/50 py-3 ${isCollapsed ? 'flex justify-center' : 'px-3'}`}>
           {isCollapsed ? (
-            <>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={toggleTheme}
-                className="w-8 h-8 p-0 rounded-full hover:bg-accent flex items-center justify-center"
-                title="Toggle theme"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                className="w-8 h-8 p-0 rounded-full hover:bg-accent flex items-center justify-center"
-                title="Configuración"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </>
+            /* User Avatar - Collapsed */
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium cursor-pointer hover:bg-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  title={getUserDisplayName()}
+                >
+                  {user?.avatar_url ? (
+                    <img 
+                      src={user.avatar_url} 
+                      alt={getUserDisplayName()}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    getAvatarFallback()
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
+                    {user?.email && (
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Cerrar sesión</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
-            <div className="flex items-center justify-between">
-              <div className={`flex items-center gap-3 px-3 py-2 text-foreground/70 hover:bg-accent rounded-lg cursor-pointer transition-all duration-300 overflow-hidden ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}>
-                <Settings className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm whitespace-nowrap">Configuración</span>
-              </div>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={toggleTheme}
-                className={`rounded-full transition-all duration-300 ${isCollapsed ? 'opacity-0 scale-95 translate-x-2' : 'opacity-100 scale-100 translate-x-0'}`}
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-            </div>
+            /* User Profile - Expanded */
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button 
+                  className="flex items-center gap-3 p-3 hover:bg-accent rounded-lg transition-colors cursor-pointer group w-full focus:outline-none focus:bg-accent"
+                  title="Abrir menú de usuario"
+                >
+                  <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium flex-shrink-0">
+                    {user?.avatar_url ? (
+                      <img 
+                        src={user.avatar_url} 
+                        alt={getUserDisplayName()}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      getAvatarFallback()
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {getUserDisplayName()}
+                    </p>
+                    {user?.email && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronUp className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="center" className="w-56" sideOffset={8}>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
+                    {user?.email && (
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Cerrar sesión</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>

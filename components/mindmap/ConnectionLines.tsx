@@ -4,9 +4,11 @@ interface ConnectionLinesProps {
   cards: Record<string, MindMapCard>;
   connections: Connection[];
   canvasSize: { width: number; height: number };
+  animatedConnections?: string[];
+  processingConnections?: string[];
 }
 
-export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLinesProps) {
+export function ConnectionLines({ cards, connections, canvasSize, animatedConnections = [], processingConnections = [] }: ConnectionLinesProps) {
   const getConnectionPath = (from: MindMapCard, to: MindMapCard, type: 'dependency' | 'hierarchy') => {
     const startX = from.position.x;
     const startY = from.position.y;
@@ -14,35 +16,70 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
     const endY = to.position.y;
 
     if (type === 'hierarchy') {
+      // Calculate edge points for better particle animation
+      let actualStartX = startX;
+      let actualStartY = startY;
+      let actualEndX = endX;
+      let actualEndY = endY;
+
+      // Adjust start point to edge of source card
+      if (from.type === 'root') {
+        actualStartY = startY + (from.size.height / 2); // Bottom edge of root card
+      } else if (from.type === 'branch') {
+        actualStartY = startY + (from.size.height / 2); // Bottom edge of branch card
+      }
+
+      // Adjust end point to edge of target card  
+      if (to.type === 'branch') {
+        actualEndY = endY - (to.size.height / 2); // Top edge of branch card
+      } else if (to.type === 'task') {
+        actualEndY = endY - (to.size.height / 2); // Top edge of task card
+      }
+
       // Vertical tree connections: smooth curves for parent-child relationships
       if (from.type === 'root' && to.type === 'branch') {
-        // Root to branch: vertical line with slight curve
-        const midY = startY + (endY - startY) * 0.6;
-        return `M ${startX} ${startY + 100} Q ${startX} ${midY} ${endX} ${endY - 60}`;
+        const midY = actualStartY + (actualEndY - actualStartY) * 0.6;
+        return `M ${actualStartX} ${actualStartY} Q ${actualStartX} ${midY} ${actualEndX} ${actualEndY}`;
       } else if (from.type === 'branch' && to.type === 'task') {
-        // Branch to task: curved line
-        const midY = startY + (endY - startY) * 0.5;
-        return `M ${startX} ${startY + 60} Q ${(startX + endX) / 2} ${midY} ${endX} ${endY - 50}`;
+        const midY = actualStartY + (actualEndY - actualStartY) * 0.5;
+        return `M ${actualStartX} ${actualStartY} Q ${(actualStartX + actualEndX) / 2} ${midY} ${actualEndX} ${actualEndY}`;
       }
       
       // Default curved connection
-      const midX = (startX + endX) / 2;
-      const midY = (startY + endY) / 2;
-      return `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`;
+      const midX = (actualStartX + actualEndX) / 2;
+      const midY = (actualStartY + actualEndY) / 2;
+      return `M ${actualStartX} ${actualStartY} Q ${midX} ${midY} ${actualEndX} ${actualEndY}`;
     } else {
       // Dependency connections: dashed lines
       return `M ${startX} ${startY} L ${endX} ${endY}`;
     }
   };
 
-  const getConnectionStyle = (type: 'dependency' | 'hierarchy') => {
+  const getConnectionStyle = (type: 'dependency' | 'hierarchy', isAnimated: boolean = false, isProcessing: boolean = false) => {
     if (type === 'hierarchy') {
-      return {
-        stroke: 'hsl(var(--primary))',
-        strokeWidth: 2,
-        fill: 'none',
-        opacity: 0.6,
-      };
+      if (isProcessing) {
+        return {
+          stroke: '#10b981',
+          strokeWidth: 3,
+          fill: 'none',
+          opacity: 1,
+          filter: 'drop-shadow(0 0 6px #10b981)',
+        };
+      } else if (isAnimated) {
+        return {
+          stroke: '#3b82f6',
+          strokeWidth: 3,
+          fill: 'none',
+          opacity: 0.8,
+        };
+      } else {
+        return {
+          stroke: 'hsl(var(--primary))',
+          strokeWidth: 2,
+          fill: 'none',
+          opacity: 0.6,
+        };
+      }
     } else {
       return {
         stroke: 'hsl(var(--muted-foreground))',
@@ -54,9 +91,6 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
     }
   };
 
-  const getArrowMarker = (type: 'dependency' | 'hierarchy') => {
-    return type === 'hierarchy' ? 'url(#hierarchy-arrow)' : 'url(#dependency-arrow)';
-  };
 
   return (
     <svg
@@ -65,33 +99,6 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
       height={canvasSize.height}
       style={{ overflow: 'visible' }}
     >
-      {/* Define arrow markers */}
-      <defs>
-        <marker
-          id="hierarchy-arrow"
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="3"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--primary))" opacity="0.6" />
-        </marker>
-        <marker
-          id="dependency-arrow"
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="3"
-          markerWidth="4"
-          markerHeight="4"
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d="M0,0 L0,6 L9,3 z" fill="hsl(var(--muted-foreground))" opacity="0.4" />
-        </marker>
-      </defs>
 
       {connections
         .filter(connection => cards[connection.from] && cards[connection.to])
@@ -99,15 +106,71 @@ export function ConnectionLines({ cards, connections, canvasSize }: ConnectionLi
         .map((connection, index) => {
           const fromCard = cards[connection.from];
           const toCard = cards[connection.to];
+          const connectionId = `${connection.from}->${connection.to}`;
+          const isAnimated = animatedConnections.includes(connectionId);
+          const isProcessing = processingConnections.includes(connectionId);
+          const pathId = `path-${connection.from}-${connection.to}-${index}`;
+          const pathData = getConnectionPath(fromCard, toCard, connection.type);
+          
           
           return (
-            <path
-              key={`${connection.from}-${connection.to}-${index}`}
-              d={getConnectionPath(fromCard, toCard, connection.type)}
-              style={getConnectionStyle(connection.type)}
-              markerEnd={getArrowMarker(connection.type)}
-              className="transition-opacity duration-300"
-            />
+            <g key={`${connection.from}-${connection.to}-${index}-${isAnimated ? 'animated' : 'static'}-${isProcessing ? 'processing' : 'normal'}`}>
+              {/* Connection line */}
+              <path
+                id={pathId}
+                d={pathData}
+                style={getConnectionStyle(connection.type, isAnimated, isProcessing)}
+                className={`transition-all duration-500 ${isProcessing ? 'animate-pulse' : ''}`}
+              />
+              
+
+              {/* Main data particle */}
+              {isAnimated && (
+                <circle
+                  r="8"
+                  fill="#10b981"
+                  opacity="1"
+                  style={{ filter: 'drop-shadow(0 0 8px #10b981)' }}
+                >
+                  <animateMotion
+                    dur="2s"
+                    repeatCount="indefinite"
+                    rotate="auto"
+                    path={pathData}
+                    begin="0s"
+                    calcMode="spline"
+                    keySplines="0.4 0 0.6 1"
+                  />
+                  <animate
+                    attributeName="r"
+                    values="6;12;6"
+                    dur="2s"
+                    repeatCount="indefinite"
+                    calcMode="spline"
+                    keySplines="0.4 0 0.6 1;0.4 0 0.6 1"
+                  />
+                </circle>
+              )}
+              
+              {/* Data trail particles */}
+              {isAnimated && (
+                <circle
+                  r="4"
+                  fill="#3b82f6"
+                  opacity="0.7"
+                >
+                  <animateMotion
+                    dur="2s"
+                    repeatCount="indefinite"
+                    rotate="auto"
+                    begin="0.4s"
+                    path={pathData}
+                    calcMode="spline"
+                    keySplines="0.4 0 0.6 1"
+                  />
+                </circle>
+              )}
+            </g>
           );
         })}
     </svg>

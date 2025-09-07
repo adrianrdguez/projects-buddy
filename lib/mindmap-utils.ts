@@ -14,7 +14,7 @@ export function tasksToMindMapData(tasks: Task[], projectName: string): MindMapD
     title: projectName,
     description: `Proyecto principal con ${tasks.length} tareas organizadas en fases`,
     position: { x: 0, y: 0 }, // Will be positioned at center
-    size: { width: 300, height: 200 },
+    size: { width: 320, height: 220 },
     children: [],
     status: 'ready',
     visible: true,
@@ -35,7 +35,7 @@ export function tasksToMindMapData(tasks: Task[], projectName: string): MindMapD
       title: category,
       description: `${categoryTasks.length} tareas en esta fase`,
       position: { x: 0, y: 0 }, // Will be positioned around root
-      size: { width: 200, height: 120 },
+      size: { width: 220, height: 140 },
       parentId: rootId,
       children: [],
       status: getBranchStatus(categoryTasks),
@@ -60,7 +60,7 @@ export function tasksToMindMapData(tasks: Task[], projectName: string): MindMapD
         title: task.title,
         description: task.description,
         position: { x: 0, y: 0 }, // Will be positioned near branch
-        size: { width: 180, height: 100 },
+        size: { width: 200, height: 130 },
         parentId: branchId,
         children: [],
         status: task.status,

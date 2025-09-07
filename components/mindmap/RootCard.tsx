@@ -1,14 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MindMapCard } from "@/lib/mindmap-types";
-import { RefreshCw, Settings } from "lucide-react";
+import { RefreshCw, Settings, Play, Clock, CheckCircle, AlertCircle } from "lucide-react";
 
 interface RootCardProps {
   card: MindMapCard;
   onRegenerate?: () => void;
   onClick?: (card: MindMapCard) => void;
+  onStartExecution?: () => void;
+  onConfigureProject?: () => void;
+  executionState?: 'idle' | 'loading' | 'completed' | 'error';
+  executionProgress?: number; // 0-100
+  estimatedTime?: number; // seconds remaining
 }
 
-export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
+export function RootCard({ 
+  card, 
+  onRegenerate, 
+  onClick, 
+  onStartExecution, 
+  onConfigureProject,
+  executionState = 'idle',
+  executionProgress = 0,
+  estimatedTime = 0
+}: RootCardProps) {
   const handleClick = () => {
     if (onClick) {
       onClick(card);
@@ -19,6 +34,20 @@ export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
     e.stopPropagation();
     if (onRegenerate) {
       onRegenerate();
+    }
+  };
+
+  const handleStartExecution = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onStartExecution) {
+      onStartExecution();
+    }
+  };
+
+  const handleConfigureProject = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onConfigureProject) {
+      onConfigureProject();
     }
   };
 
@@ -48,8 +77,9 @@ export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
               <RefreshCw className="w-4 h-4 text-primary" />
             </button>
             <button
+              onClick={handleConfigureProject}
               className="p-2 rounded-lg hover:bg-primary/20 transition-colors"
-              title="Configuración"
+              title="Configurar directorio del proyecto"
             >
               <Settings className="w-4 h-4 text-primary" />
             </button>
@@ -62,7 +92,7 @@ export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
           {card.description}
         </p>
         
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-xs mb-4">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-primary" />
@@ -73,6 +103,58 @@ export function RootCard({ card, onRegenerate, onClick }: RootCardProps) {
             {card.children.length} fases
           </div>
         </div>
+
+        {executionState === 'idle' && (
+          <Button 
+            onClick={handleStartExecution}
+            className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
+            size="default"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Comenzar Ejecución
+          </Button>
+        )}
+        
+        {executionState === 'loading' && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Clock className="w-4 h-4 animate-spin" />
+                <span className="font-medium">Claude Code trabajando...</span>
+              </div>
+              {estimatedTime > 0 && (
+                <span className="text-muted-foreground">
+                  ~{Math.ceil(estimatedTime)}s restantes
+                </span>
+              )}
+            </div>
+            
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${executionProgress}%` }}
+              />
+            </div>
+            
+            <div className="text-xs text-center text-muted-foreground">
+              Analizando proyecto y generando código...
+            </div>
+          </div>
+        )}
+        
+        {executionState === 'completed' && (
+          <div className="flex items-center justify-center gap-2 text-green-600 font-medium">
+            <CheckCircle className="w-5 h-5" />
+            <span>¡Claude Code ejecutado exitosamente!</span>
+          </div>
+        )}
+        
+        {executionState === 'error' && (
+          <div className="flex items-center justify-center gap-2 text-red-600 font-medium">
+            <AlertCircle className="w-5 h-5" />
+            <span>Error en la ejecución</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

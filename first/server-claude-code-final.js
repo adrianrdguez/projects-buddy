@@ -10,10 +10,31 @@ const port = 3002;
 app.use(cors());
 app.use(express.json());
 
+// Track execution status
+let executionStatus = {
+  isRunning: false,
+  startTime: null,
+  completedTime: null,
+  result: null
+};
+
+// Get current execution status
+app.get('/execution-status', (req, res) => {
+  res.json(executionStatus);
+});
+
 // Endpoint principal: enviar task a Claude Code
 app.post('/send-to-claude-code', async (req, res) => {
   try {
     const { prompt, targetFile, projectName, projectPath } = req.body;
+    
+    // Set status to running immediately
+    executionStatus = {
+      isRunning: true,
+      startTime: new Date(),
+      completedTime: null,
+      result: null
+    };
     
     console.log(`🤖 Iniciando Claude Code workflow...`);
     console.log(`📁 Proyecto: ${projectName || 'N/A'}`);
@@ -24,6 +45,7 @@ app.post('/send-to-claude-code', async (req, res) => {
     // 1. Verificar Claude Code
     const claudeAvailable = await checkClaudeCode();
     if (!claudeAvailable) {
+      executionStatus.isRunning = false;
       return res.status(400).json({
         success: false,
         message: 'Claude Code no está disponible'
@@ -44,6 +66,14 @@ app.post('/send-to-claude-code', async (req, res) => {
       result = await executeClaudeCodeGeneral(enhancedPrompt, workingDirectory);
     }
     
+    // Mark as completed
+    executionStatus = {
+      isRunning: false,
+      startTime: executionStatus.startTime,
+      completedTime: new Date(),
+      result: result
+    };
+    
     console.log('✅ Claude Code completado!');
     
     res.json({ 
@@ -55,6 +85,7 @@ app.post('/send-to-claude-code', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Error en Claude Code:', error);
+    executionStatus.isRunning = false;
     res.status(500).json({ 
       success: false, 
       message: 'Error ejecutando Claude Code',

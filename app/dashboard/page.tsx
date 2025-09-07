@@ -6,6 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { MindMapCanvas } from "@/components/mindmap/MindMapCanvas";
 import { InputBar } from "@/components/InputBar";
+import { ProjectPathDialog } from "@/components/ProjectPathDialog";
 import { Project, Task, GenerateTasksResponse, ProjectsResponse, ExecuteTaskResponse } from "@/lib/types";
 import { makeAuthenticatedRequest } from "@/lib/api";
 
@@ -20,6 +21,9 @@ export default function Dashboard() {
   const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [projectPathDialogOpen, setProjectPathDialogOpen] = useState(false);
+  const [isUpdatingProjectPath, setIsUpdatingProjectPath] = useState(false);
+  const [executionState, setExecutionState] = useState<'idle' | 'loading' | 'completed' | 'error'>('idle');
 
   // Protect route - redirect to login if not authenticated
   useEffect(() => {
@@ -187,6 +191,16 @@ export default function Dashboard() {
     setSidebarCollapsed(isCollapsed);
   };
 
+  const handleLogout = () => {
+    // Clear any local state/cache if needed
+    setProjects([]);
+    setTasks([]);
+    setActiveProjectId(null);
+    
+    // Redirect to logout/login page
+    router.push('/');
+  };
+
   const handleTaskClick = (task: Task) => {
     console.log("Task clicked:", task);
   };
@@ -325,6 +339,134 @@ export default function Dashboard() {
     }
   };
 
+  const handleConfigureProject = () => {
+    setProjectPathDialogOpen(true);
+  };
+
+  const handleProjectPathSave = async (projectPath: string) => {
+    if (!activeProjectId) return;
+
+    try {
+      setIsUpdatingProjectPath(true);
+      const response = await makeAuthenticatedRequest(`/api/projects/${activeProjectId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          projectPath: projectPath
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update project path in local state
+        setProjects(prev => prev.map(project => 
+          project.id === activeProjectId 
+            ? { ...project, projectPath: projectPath }
+            : project
+        ));
+        setProjectPathDialogOpen(false);
+        setError(null);
+      } else {
+        setError(data.error || 'Failed to update project path');
+      }
+    } catch (err) {
+      setError('Network error: Could not update project path');
+    } finally {
+      setIsUpdatingProjectPath(false);
+    }
+  };
+
+  const handleStartExecution = async () => {
+    if (!activeProject) {
+      setError('No hay proyecto activo');
+      return;
+    }
+
+    // Check if project has a configured path
+    if (!activeProject.projectPath) {
+      setError('Primero configura el directorio del proyecto haciendo clic en ⚙️');
+      return;
+    }
+
+    try {
+      setExecutionState('loading');
+      setError(null);
+      
+      // Create a comprehensive prompt for the project
+      const projectPrompt = `
+Proyecto: ${activeProject.name}
+Directorio: ${activeProject.projectPath}
+Tareas pendientes: ${tasks.length} tareas
+
+Tareas del proyecto:
+${tasks.map(task => `- ${task.title}: ${task.description}`).join('\n')}
+
+Por favor, ayúdame a implementar este proyecto paso a paso.
+Empezaremos con la primera tarea: ${tasks[0]?.title || 'Configurar proyecto'}
+`;
+
+      const response = await makeAuthenticatedRequest('/api/execute-project', {
+        method: 'POST',
+        body: JSON.stringify({
+          projectId: activeProject.id,
+          projectPath: activeProject.projectPath,
+          prompt: projectPrompt
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Start polling to check if Claude Code completed
+        startPollingClaudeCodeStatus();
+      } else {
+        setExecutionState('error');
+        setError(data.error || 'Failed to start project execution');
+      }
+    } catch (err) {
+      setExecutionState('error');
+      setError('Network error: Could not start project execution');
+    }
+  };
+
+  // Poll Claude Code server to check completion status
+  const startPollingClaudeCodeStatus = () => {
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:3002/execution-status');
+        if (response.ok) {
+          const status = await response.json();
+          console.log('Execution status:', status);
+          
+          if (!status.isRunning && status.completedTime) {
+            // Execution completed!
+            console.log('✅ Claude Code execution completed');
+            clearInterval(pollInterval);
+            setExecutionState('completed');
+          } else if (!status.isRunning && !status.completedTime && status.startTime) {
+            // Execution failed
+            console.log('❌ Claude Code execution failed');
+            clearInterval(pollInterval);
+            setExecutionState('error');
+          }
+          // If status.isRunning is true, continue polling
+        }
+      } catch (error) {
+        // Server might be down, continue polling
+        console.log('Polling Claude Code server...');
+      }
+    }, 1000); // Poll every 1 second for faster response
+
+    // Stop polling after 5 minutes max (longer timeout for complex tasks)
+    setTimeout(() => {
+      clearInterval(pollInterval);
+      if (executionState === 'loading') {
+        console.log('⏰ Polling timeout - assuming completed');
+        setExecutionState('completed');
+      }
+    }, 300000); // 5 minutes max
+  };
+
   // Show loading only on initial load, not when switching tabs
   if (loading || (isLoadingProjects && !hasLoadedProjects)) {
     return (
@@ -351,6 +493,12 @@ export default function Dashboard() {
         onNewProject={createNewProject}
         onDeleteProject={handleDeleteProject}
         onToggle={handleSidebarToggle}
+        user={{
+          name: user?.user_metadata?.full_name || user?.user_metadata?.name,
+          email: user?.email,
+          avatar_url: user?.user_metadata?.avatar_url
+        }}
+        onLogout={handleLogout}
       />
       
       <div className={`flex flex-col flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-12' : 'ml-0'}`}>
@@ -375,7 +523,10 @@ export default function Dashboard() {
           onTaskClick={handleTaskClick}
           onTaskExecute={handleTaskExecute}
           onProjectNameChange={handleProjectNameChange}
+          onConfigureProject={handleConfigureProject}
+          onStartExecution={handleStartExecution}
           isLoading={isLoadingTasks}
+          executionState={executionState}
         />
 
       </div>
@@ -385,6 +536,15 @@ export default function Dashboard() {
         isLoading={isLoadingTasks}
         placeholder={activeProject ? "Describe las tareas para tu proyecto..." : "Selecciona un proyecto primero"}
         sidebarCollapsed={sidebarCollapsed}
+      />
+
+      {/* Project Path Configuration Dialog */}
+      <ProjectPathDialog
+        project={activeProject}
+        open={projectPathDialogOpen}
+        onOpenChange={setProjectPathDialogOpen}
+        onSave={handleProjectPathSave}
+        isLoading={isUpdatingProjectPath}
       />
     </div>
   );

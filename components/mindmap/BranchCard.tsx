@@ -10,6 +10,7 @@ interface BranchCardProps {
   onClick?: (card: MindMapCard) => void;
   onToggleChildren?: (cardId: string) => void;
   childrenVisible: boolean;
+  isProcessing?: boolean;
 }
 
 export function BranchCard({ 
@@ -18,7 +19,8 @@ export function BranchCard({
   completedTasks, 
   onClick, 
   onToggleChildren,
-  childrenVisible 
+  childrenVisible,
+  isProcessing = false
 }: BranchCardProps) {
   const handleClick = () => {
     if (onClick) {
@@ -43,13 +45,17 @@ export function BranchCard({
 
   return (
     <Card 
-      className="bg-card border border-border/60 rounded-xl shadow-md cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 hover:border-primary/30"
+      className={`bg-card border border-border/60 rounded-xl shadow-md cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 hover:border-primary/30 ${
+        isProcessing ? 'animate-pulse shadow-lg' : ''
+      }`}
       style={{
         position: 'absolute',
         left: card.position.x - card.size.width / 2,
         top: card.position.y - card.size.height / 2,
         width: card.size.width,
         height: card.size.height,
+        boxShadow: isProcessing ? '0 0 20px rgba(16, 185, 129, 0.5), 0 0 40px rgba(16, 185, 129, 0.3)' : undefined,
+        border: isProcessing ? '2px solid #10b981' : undefined,
       }}
       onClick={handleClick}
     >

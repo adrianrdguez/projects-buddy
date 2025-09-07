@@ -5,6 +5,7 @@ export interface Project {
   description?: string;
   tech_stack: string[]; // Array of technologies like ["Next.js", "Supabase", "Stripe"]
   status: 'active' | 'completed' | 'archived';
+  projectPath?: string; // Local directory path where project files are located
   createdAt: Date;
   updatedAt: Date;
 }
@@ -49,6 +50,8 @@ export interface SidebarProps {
   onNewProject: () => void;
   onDeleteProject?: (projectId: string) => void;
   onToggle?: (isCollapsed: boolean) => void;
+  user?: { name?: string; email?: string; avatar_url?: string };
+  onLogout?: () => void;
 }
 
 export interface InputBarProps {
